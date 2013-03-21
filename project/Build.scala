@@ -15,7 +15,8 @@ object ApplicationBuild extends Build {
     "postgresql" % "postgresql" % "9.1-901.jdbc4",
     "commons-io" % "commons-io" % "2.1",
     "net.htmlparser.jericho" % "jericho-html" % "3.3",
-    "commons-codec" % "commons-codec" % "1.7"
+    "commons-codec" % "commons-codec" % "1.7",
+    "net.sourceforge.cssparser" % "cssparser" % "0.9.9"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(

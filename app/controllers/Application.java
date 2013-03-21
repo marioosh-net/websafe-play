@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
@@ -22,6 +23,13 @@ import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.Util;
 import org.apache.commons.io.IOUtils;
+import org.w3c.css.sac.CSSParseException;
+import org.w3c.css.sac.InputSource;
+import org.w3c.dom.css.CSSRule;
+import org.w3c.dom.css.CSSRuleList;
+import org.w3c.dom.css.CSSStyleDeclaration;
+import org.w3c.dom.css.CSSStyleRule;
+import org.w3c.dom.css.CSSStyleSheet;
 import play.Logger;
 import play.data.Form;
 import play.data.validation.ValidationError;
@@ -29,6 +37,7 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import views.html.index;
 import com.avaje.ebean.Ebean;
+import com.steadystate.css.parser.CSSOMParser;
 
 public class Application extends Controller {
 
@@ -130,6 +139,31 @@ public class Application extends Controller {
 			    } catch (Exception ex) {
 			      continue; // don't convert if URL is invalid
 			    }
+			    
+			    /**
+			     * css parser
+			     */
+				try {
+					CSSOMParser css = new CSSOMParser();
+					InputSource source1 = new InputSource(new StringReader(styleSheetContent));
+					CSSStyleSheet stylesheet = css.parseStyleSheet(source1, null, null);
+					CSSRuleList ruleList = stylesheet.getCssRules();
+					for (int k = 0; k < ruleList.getLength(); k++) {
+						CSSRule rule = ruleList.item(k);
+						if (rule instanceof CSSStyleRule) {
+							CSSStyleRule styleRule = (CSSStyleRule) rule;
+							Logger.info("selector:" + k + ": " + styleRule.getSelectorText());
+							CSSStyleDeclaration styleDeclaration = styleRule.getStyle();
+							for (int z = 0; z < styleDeclaration.getLength(); z++) {
+								String property = styleDeclaration.item(z);
+								Logger.info("property: " + property + " :: " + "value: " + styleDeclaration.getPropertyCSSValue(property).getCssText());  
+							}
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}			    
+			    
 			    sb.setLength(0);
 			    sb.append("<style");
 			    Attribute typeAttribute=attributes.get("type");
