@@ -1,0 +1,7 @@
+@(messages: List[model.Message])
+
+<ul>
+@for(m <- messages) {
+    <li><a href="/open/@m.getId()" target="_blank">@m<span class="content-type">@m.getContentType()</span></a></li>
+}
+</ul>

@@ -1,0 +1,10 @@
+.content-type {
+	color: silver;
+	padding: 5px;
+}
+.info {
+	color: green;
+}
+.error {
+	color: red;
+}
