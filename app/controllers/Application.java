@@ -126,122 +126,131 @@ public class Application extends Controller {
 			OutputDocument outputDocument = new OutputDocument(source);
 			StringBuilder sb=new StringBuilder();
 			
-			/**
-			 * replace <link rel="stylesheet" href="<path>" .../>
-			 * with <style type="text/css"> code </style>
-			 */
-			List linkStartTags = source.getAllStartTags(HTMLElementName.LINK);
-			int j = 0;
-			for (Iterator i=linkStartTags.iterator(); i.hasNext();) {
+			int cssCount = 0;
+			int scriptCount = 0;
+			int imgCount = 0;
+			
+			List all = source.getAllStartTags();
+			int k = 0;
+			for (Iterator i=all.iterator(); i.hasNext();) {
+				sb=new StringBuilder();
 			    StartTag startTag=(StartTag)i.next();
-			    Attributes attributes=startTag.getAttributes();
-			    String rel=attributes.getValue("rel");
-			    if (!"stylesheet".equalsIgnoreCase(rel)) continue;
-			    String href=attributes.getValue("href");
-			    if (href==null) continue;
-			    String styleSheetContent;
-			    try {
-			      styleSheetContent = Util.getString(new InputStreamReader(new URL(sourceUrl,href).openStream()));
-			      styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href));
-			      // Message m = new Message();
-			    } catch (Exception ex) {
-			      continue; // don't convert if URL is invalid
-			    }
+			    //Logger.info(startTag.getName());
 			    
-			    /**
-			     * css parser
-			     *
-				try {
-					CSSOMParser css = new CSSOMParser();
-					InputSource source1 = new InputSource(new StringReader(styleSheetContent));
-					CSSStyleSheet stylesheet = css.parseStyleSheet(source1, null, null);
-					CSSRuleList ruleList = stylesheet.getCssRules();
-					for (int k = 0; k < ruleList.getLength(); k++) {
-						CSSRule rule = ruleList.item(k);
-						if (rule instanceof CSSStyleRule) {
-							CSSStyleRule styleRule = (CSSStyleRule) rule;
-							Logger.info("selector:" + k + ": " + styleRule.getSelectorText());
-							CSSStyleDeclaration styleDeclaration = styleRule.getStyle();
-							for (int z = 0; z < styleDeclaration.getLength(); z++) {
-								String property = styleDeclaration.item(z);
-								Logger.info("property: " + property + " :: " + "value: " + styleDeclaration.getPropertyCSSValue(property).getCssText());  
+				/**
+				 * replace <link rel="stylesheet" href="<path>" .../>
+				 * with <style type="text/css"> code </style>
+				 */			    
+			    if(startTag.getName().equalsIgnoreCase("link")) {
+				    Attributes attributes=startTag.getAttributes();
+				    String rel=attributes.getValue("rel");
+				    if (!"stylesheet".equalsIgnoreCase(rel)) continue;
+				    String href=attributes.getValue("href");
+				    if (href==null) continue;
+				    String styleSheetContent;
+				    try {
+				      styleSheetContent = Util.getString(new InputStreamReader(new URL(sourceUrl,href).openStream()));
+				      styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href));
+				      // Message m = new Message();
+				    } catch (Exception ex) {
+				    	Logger.error(ex.toString());
+				      continue; // don't convert if URL is invalid
+				    }
+				    
+				    /**
+				     * css parser
+				     *
+					try {
+						CSSOMParser css = new CSSOMParser();
+						InputSource source1 = new InputSource(new StringReader(styleSheetContent));
+						CSSStyleSheet stylesheet = css.parseStyleSheet(source1, null, null);
+						CSSRuleList ruleList = stylesheet.getCssRules();
+						for (int k = 0; k < ruleList.getLength(); k++) {
+							CSSRule rule = ruleList.item(k);
+							if (rule instanceof CSSStyleRule) {
+								CSSStyleRule styleRule = (CSSStyleRule) rule;
+								Logger.info("selector:" + k + ": " + styleRule.getSelectorText());
+								CSSStyleDeclaration styleDeclaration = styleRule.getStyle();
+								for (int z = 0; z < styleDeclaration.getLength(); z++) {
+									String property = styleDeclaration.item(z);
+									Logger.info("property: " + property + " :: " + "value: " + styleDeclaration.getPropertyCSSValue(property).getCssText());  
+								}
 							}
 						}
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				*/			    
-			    
-			    sb.setLength(0);
-			    sb.append("<style");
-			    Attribute typeAttribute=attributes.get("type");
-			    if (typeAttribute!=null) sb.append(' ').append(typeAttribute);
-			    sb.append(">\n").append(styleSheetContent).append("\n</style>");
-			    outputDocument.replace(startTag,sb);
-			    
-			    Logger.info("REPLACED css: "+href);
-			    j++;
-			  }
-			
-			Logger.info("REPLACED css count: "+j);
-			
-			/**
-			 * replace <img src="<path>" .../>
-			 * with base64 <img src="data:image/jpg;base64,..."/>
-			 */
-			j = 0;
-			List imgStartTags = source.getAllStartTags(HTMLElementName.IMG);
-			for (Iterator i=imgStartTags.iterator(); i.hasNext();) {
-			    StartTag startTag=(StartTag)i.next();
-			    Attributes attributes=startTag.getAttributes();
-			    final String src=attributes.getValue("src");
-			    if (src==null) continue;
-			    
-			    // Logger.info("img: "+src);
-			    // toBase64(src);
-			    
-			    outputDocument.replace(attributes, new HashMap<String, String>(){{
-			    	// put("src","http://www.copywriting.pl/wp-content/uploads/2011/09/udana-nazwa.jpg");
-			    	put("src",toBase64(src.startsWith("http") ? new URL(src) : new URL(sourceUrl, src)));
-			    }});
-			    
-			    Logger.info("REPLACED img src: "+src);
-			    j++;
-			}
-			Logger.info("REPLACED img src count: "+j);
-			
-			/**
-			 * replace <script src="<path>" .../>
-			 * with <script> js code </script>
-			 */
-			List js = source.getAllStartTags(HTMLElementName.SCRIPT);
-			j = 0;
-			for (Iterator i=linkStartTags.iterator(); i.hasNext();) {
-			    StartTag startTag=(StartTag)i.next();
-			    Attributes attributes=startTag.getAttributes();
-			    String src=attributes.getValue("src");
-			    if (src==null) continue;
-			    String jsText;
-			    try {
-			    	jsText = Util.getString(new InputStreamReader(new URL(sourceUrl,src).openStream()));
-			    } catch (Exception ex) {
-			      continue; // don't convert if URL is invalid
+					*/			    
+				    
+				    sb.setLength(0);
+				    sb.append("<style");
+				    Attribute typeAttribute=attributes.get("type");
+				    if (typeAttribute!=null) sb.append(' ').append(typeAttribute);
+				    sb.append(">\n").append(styleSheetContent).append("\n</style>");
+				    outputDocument.replace(startTag,sb);
+				    
+				    Logger.info("REPLACED css: "+href);
+				    cssCount++;
 			    }
-			    sb.setLength(0);
-			    sb.append("<script");
-			    Attribute typeAttribute=attributes.get("type");
-			    if (typeAttribute!=null) sb.append(' ').append(typeAttribute);
-			    sb.append(">\n").append(jsText).append("\n</script>");
-			    outputDocument.replace(startTag,sb);
 			    
-			    Logger.info("REPLACED js: "+src);
-			    j++;
-			  }
+				/**
+				 * replace <img src="<path>" .../>
+				 * with base64 <img src="data:image/jpg;base64,..."/>
+				 */
+			    if(startTag.getName().equalsIgnoreCase("img")) {
+				    Attributes attributes=startTag.getAttributes();
+				    final String src=attributes.getValue("src");
+				    if (src==null) continue;
+				    
+				    // Logger.info("img: "+src);
+				    // toBase64(src);
+				    
+				    outputDocument.replace(attributes, new HashMap<String, String>(){{
+				    	// put("src","http://www.copywriting.pl/wp-content/uploads/2011/09/udana-nazwa.jpg");
+				    	put("src",toBase64(src.startsWith("http") ? new URL(src) : new URL(sourceUrl, src)));
+				    }});
+				    
+				    Logger.info("REPLACED img src: "+src);
+				    imgCount++;
+			    	
+			    }
+			    
+				/**
+				 * replace <script src="<path>" .../>
+				 * with <script> js code </script>
+				 */			    
+			    if(startTag.getName().equalsIgnoreCase("script")) {
+				    Attributes attributes=startTag.getAttributes();
+				    String src=attributes.getValue("src");
+				    if (src==null) continue;
+				    String jsText;
+				    try {
+				    	Logger.info(new URL(sourceUrl,src).toString());
+				    	jsText = Util.getString(new InputStreamReader(new URL(sourceUrl,src).openStream()));
+				    	Logger.info("jsText: "+jsText);
+				    } catch (Exception ex) {
+				    	Logger.error(ex.toString());
+				      continue; // don't convert if URL is invalid
+				    }
+				    sb.setLength(0);
+				    sb.append("<script");
+				    Attribute typeAttribute=attributes.get("type");
+				    if (typeAttribute!=null) sb.append(' ').append(typeAttribute);
+				    sb.append(">\n").append(jsText).append("\n</script>");
+				    
+				    Logger.info(sb.toString());
+				    
+				    outputDocument.replace(startTag,sb);
+				    
+				    Logger.info("REPLACED js: "+src);
+				    scriptCount++;
+			    	
+			    }
+			}
+			Logger.info("REPLACED css count: "+cssCount);
+			Logger.info("REPLACED img src count: "+imgCount);
+			Logger.info("REPLACED script count: "+scriptCount);
 			
-			Logger.info("REPLACED js count: "+j);			
-			
-		    			
 			return outputDocument.toString();
 			
 		} catch (IOException e) {
