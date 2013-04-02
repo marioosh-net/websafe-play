@@ -1,6 +1,7 @@
 import sbt._
 import Keys._
 import play.Project._
+import com.github.play2war.plugin._
 
 object ApplicationBuild extends Build {
 
@@ -15,11 +16,13 @@ object ApplicationBuild extends Build {
     "postgresql" % "postgresql" % "9.1-901.jdbc4",
     "commons-io" % "commons-io" % "2.1",
     "net.htmlparser.jericho" % "jericho-html" % "3.3",
-    "commons-codec" % "commons-codec" % "1.7"
+    "commons-codec" % "commons-codec" % "1.7",
+    "net.sourceforge.cssparser" % "cssparser" % "0.9.9"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(
-    // Add your own project settings here      
-  )
+    // Add your own project settings here     
+    Play2WarKeys.servletVersion := "3.0"
+  ).settings(Play2WarPlugin.play2WarSettings: _*)
 
 }
