@@ -1,3 +1,7 @@
+body, html {
+	font-family: verdana, arial, tahoma, serif;
+	font-size: 0.9em;
+}
 .content-type {
 	color: silver;
 	padding: 5px;
@@ -7,4 +11,15 @@
 }
 .error {
 	color: red;
+}
+.title {
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+form {
+    /*height: 0em auto;*/
+}
+dd, dl {
+    margin: 0em;
 }

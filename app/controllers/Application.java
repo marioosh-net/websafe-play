@@ -91,6 +91,7 @@ public class Application extends Controller {
 		l.setContentType(c.getContentType());		
 		
 		File f = File.createTempFile(UUID.randomUUID().toString(), "");
+		f.deleteOnExit();
 		Logger.info(f.getAbsolutePath());
 		FileOutputStream o = new FileOutputStream(f);
 		IOUtils.copy(in, o);
@@ -112,6 +113,7 @@ public class Application extends Controller {
 		
 		l.save();
 		in.close();
+		Logger.debug(f.getAbsolutePath() + (f.delete() ? " deleted":" not deleted"));
 	}
 	
 	// lista powiazanych plikow, plik zrodlowy bedzie musial miec zmienione odnosniki
@@ -227,7 +229,6 @@ public class Application extends Controller {
 				    try {
 				    	Logger.info(new URL(sourceUrl,src).toString());
 				    	jsText = Util.getString(new InputStreamReader(new URL(sourceUrl,src).openStream()));
-				    	Logger.info("jsText: "+jsText);
 				    } catch (Exception ex) {
 				    	Logger.error(ex.toString());
 				      continue; // don't convert if URL is invalid
@@ -237,9 +238,6 @@ public class Application extends Controller {
 				    Attribute typeAttribute=attributes.get("type");
 				    if (typeAttribute!=null) sb.append(' ').append(typeAttribute);
 				    sb.append(">\n").append(jsText).append("\n</script>");
-				    
-				    Logger.info(sb.toString());
-				    
 				    outputDocument.replace(startTag,sb);
 				    
 				    Logger.info("REPLACED js: "+src);
