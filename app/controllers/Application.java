@@ -87,6 +87,7 @@ public class Application extends Controller {
 		Logger.info("adding...");
 		URL url = new URL(l.getUrl());
 		URLConnection c = url.openConnection();
+		c.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22");
 		InputStream in = c.getInputStream();
 		l.setContentType(c.getContentType());		
 		
