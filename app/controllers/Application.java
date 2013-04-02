@@ -7,12 +7,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import model.Message;
 import net.htmlparser.jericho.Attribute;
 import net.htmlparser.jericho.Attributes;
@@ -33,7 +36,7 @@ import com.avaje.ebean.Ebean;
 public class Application extends Controller {
 
     public static Result index() {
-        return ok(index.render(Form.form(Message.class), Message.find.orderBy("timestamp").findList()));
+        return ok(index.render(Form.form(Message.class), Message.find.orderBy("timestamp desc").findList()));
     }
     
     public static Result post() {
@@ -57,8 +60,7 @@ public class Application extends Controller {
     	return redirect("/");
     }
 
-    public static String toBase64(String url1) throws IOException {
-		URL url = new URL(url1);
+    public static String toBase64(URL url) throws IOException {
 		URLConnection c = url.openConnection();
 		InputStream in = c.getInputStream();
 		// return "data:"+c.getContentType()+";base64,"+org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(IOUtils.toByteArray(in));
@@ -110,10 +112,15 @@ public class Application extends Controller {
 	
 	private static String process(File f, String sourceUrlString) {
 		try {
-			URL sourceUrl=new URL(sourceUrlString);
+			final URL sourceUrl=new URL(sourceUrlString);
 			Source source = new Source(f);
 			OutputDocument outputDocument = new OutputDocument(source);
 			StringBuilder sb=new StringBuilder();
+			
+			/**
+			 * replace <link rel="stylesheet" href="<path>" .../>
+			 * with <style type="text/css"> code </style>
+			 */
 			List linkStartTags = source.getAllStartTags(HTMLElementName.LINK);
 			int j = 0;
 			for (Iterator i=linkStartTags.iterator(); i.hasNext();) {
@@ -126,7 +133,8 @@ public class Application extends Controller {
 			    String styleSheetContent;
 			    try {
 			      styleSheetContent = Util.getString(new InputStreamReader(new URL(sourceUrl,href).openStream()));
-			      Message m = new Message();
+			      styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href));
+			      // Message m = new Message();
 			    } catch (Exception ex) {
 			      continue; // don't convert if URL is invalid
 			    }
@@ -141,8 +149,13 @@ public class Application extends Controller {
 			    j++;
 			  }
 			
-			Logger.info("REPLACED css: "+j);
+			Logger.info("REPLACED css count: "+j);
 			
+			/**
+			 * replace <img src="<path>" .../>
+			 * with base64 <img src="data:image/jpg;base64,..."/>
+			 */
+			j = 0;
 			List imgStartTags = source.getAllStartTags(HTMLElementName.IMG);
 			for (Iterator i=imgStartTags.iterator(); i.hasNext();) {
 			    StartTag startTag=(StartTag)i.next();
@@ -150,15 +163,49 @@ public class Application extends Controller {
 			    final String src=attributes.getValue("src");
 			    if (src==null) continue;
 			    
+			    // Logger.info("img: "+src);
 			    // toBase64(src);
 			    
 			    outputDocument.replace(attributes, new HashMap<String, String>(){{
 			    	// put("src","http://www.copywriting.pl/wp-content/uploads/2011/09/udana-nazwa.jpg");
-			    	put("src",toBase64(src));
+			    	put("src",toBase64(src.startsWith("http") ? new URL(src) : new URL(sourceUrl, src)));
 			    }});
 			    
 			    Logger.info("REPLACED img src: "+src);
+			    j++;
 			}
+			Logger.info("REPLACED img src count: "+j);
+			
+			/**
+			 * replace <script src="<path>" .../>
+			 * with <script> js code </script>
+			 */
+			List js = source.getAllStartTags(HTMLElementName.SCRIPT);
+			j = 0;
+			for (Iterator i=linkStartTags.iterator(); i.hasNext();) {
+			    StartTag startTag=(StartTag)i.next();
+			    Attributes attributes=startTag.getAttributes();
+			    String src=attributes.getValue("src");
+			    if (src==null) continue;
+			    String jsText;
+			    try {
+			    	jsText = Util.getString(new InputStreamReader(new URL(sourceUrl,src).openStream()));
+			    } catch (Exception ex) {
+			      continue; // don't convert if URL is invalid
+			    }
+			    sb.setLength(0);
+			    sb.append("<script");
+			    Attribute typeAttribute=attributes.get("type");
+			    if (typeAttribute!=null) sb.append(' ').append(typeAttribute);
+			    sb.append(">\n").append(jsText).append("\n</script>");
+			    outputDocument.replace(startTag,sb);
+			    
+			    Logger.info("REPLACED js: "+src);
+			    j++;
+			  }
+			
+			Logger.info("REPLACED js count: "+j);			
+			
 		    			
 			return outputDocument.toString();
 			
@@ -168,6 +215,49 @@ public class Application extends Controller {
 		return null;
 	}
 
+	/**
+	 * replace all url() with base64
+	 * @param input
+	 * @return
+	 */
+	private static String processCss(String input, URL baseUrl) {
+
+		//StringBuffer sb = new StringBuffer(input.length());
+		StringBuffer sb = new StringBuffer();
+		
+		// (url\s{0,}\(\s{0,}['"]{0,1})([^\)'"]*)(['"]{0,1}\))
+		String regex = "(url\\s{0,}\\(\\s{0,}['\"]{0,1})([^\\'\")]*)(['\"]{0,1}\\))";
+		// input.replaceAll(regex, "$1"+"URL"+"$2$3");
+		// return input;
+		Pattern p = Pattern.compile(regex, Pattern.DOTALL);
+		Matcher m = p.matcher(input);
+		while(m.find()) {
+			try {
+				URL url;
+				if(m.group(2).startsWith("http")) {
+					url = new URL(m.group(2)); 
+				} else if(m.group(2).startsWith("data:")) {
+					url = null;
+				} else {
+					url = new URL(baseUrl, m.group(2));
+				}
+				if(url != null) {
+					Logger.warn(m.group() + " => " + url.toString());
+					try {
+						String b64 = toBase64(url);
+						m.appendReplacement(sb, Matcher.quoteReplacement(m.group(1)+b64+m.group(3)));
+					} catch (IOException e) {
+						Logger.error(e.toString());
+					}
+				}
+			} catch (MalformedURLException e) {
+				Logger.error(e.toString());
+			}
+		}
+		m.appendTail(sb);
+		return sb.toString();
+	}
+	
 	public static Result open(Long id) {
 		Message m = Ebean.find(Message.class, id);//Message.find.byId(id);
 		if(m == null) {
