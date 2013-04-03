@@ -4,12 +4,21 @@ $(document).ready(function(){
 	
 	$('#okAsync').click(function(){
 		$.ajax({
-			url: 'http://localhost:9000/asyncPost',
+			url: '/asyncPost',
 			method: 'post',
-			data: $('#form').serialize(),
-			success: function(data) {
-				console.log(data);
-			}
+			data: $('#form').serialize()
 		});
 	});
+	
+	$('#comet').click(function(){
+		$.ajax({
+			url: '/comet',
+			method: 'get'
+		});		
+	});
 });
+
+window['log'] = log
+function log(m) {
+	$('#log').append(m+'<br\>');
+}
