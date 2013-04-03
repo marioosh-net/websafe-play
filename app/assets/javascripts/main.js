@@ -20,5 +20,6 @@ $(document).ready(function(){
 
 window['log'] = log
 function log(m) {
-	$('#log').append(m+'<br\>');
+	$('#log').html(m+'<br\>');
+	console.log(m);
 }

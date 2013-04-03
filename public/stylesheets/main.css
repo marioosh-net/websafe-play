@@ -28,11 +28,11 @@ dd, dl {
 	position: fixed;
 	right: 0px;
 	top: 0px;
-	width: 800px;
-	height: 400px;
+	width: 400px;
+	height: 50px;
 	border: 1px solid silver;
 	overflow: auto;
 }
 iframe {
-	height: 20px;
+	display: none;
 }

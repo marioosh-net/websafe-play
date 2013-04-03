@@ -37,6 +37,7 @@ import play.Logger;
 import play.data.Form;
 import play.data.validation.ValidationError;
 import play.libs.Comet;
+import play.libs.F.Callback0;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.Results.Chunks.Out;
@@ -393,6 +394,12 @@ public class Application extends Controller {
 					sendMessage("comet message "+i++);
 				}
 				//close();
+			}
+			
+			@Override
+			public void onDisconnected(Callback0 callback) {
+				sendMessage("disconnect");
+				close();
 			}
 		};
 		
