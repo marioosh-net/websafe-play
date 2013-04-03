@@ -5,6 +5,7 @@
 # Home page
 GET     /                           controllers.Application.index()
 POST    /post                           controllers.Application.post()
+POST    /asyncPost                           controllers.Application.asyncPost()
 GET     /open/:id                   controllers.Application.open(id: Long)
 
 # Map static resources from the /public folder to the /assets URL path

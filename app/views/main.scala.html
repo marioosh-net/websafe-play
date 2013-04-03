@@ -11,6 +11,7 @@
         <script src="@routes.Assets.at("javascripts/main.min.js")" type="text/javascript"></script>
     </head>
     <body>
+        <div id="log"></div>
         <div class="title"><a href="/">WebPage SAVER</a></div>
         @if(flash.get("info")) {<div class="info">@flash.get("info")</div>}
         @if(flash.get("error")) {<div class="error">@flash.get("error")</div>}

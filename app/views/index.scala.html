@@ -9,9 +9,10 @@
     </form>
     *@
     
-    @form(action = routes.Application.post) {
+    @form(action = routes.Application.post, 'id -> "form") {
         @inputText(myForm("url"), 'size -> 100, 'placeholder -> "http....", '_label -> "Some URL")
-        <input type="submit" value="ok"/>
+        <input type="submit" value="ok" id="ok" />
+        <input type="button" value="okAsync" id="okAsync" />
     }
     
     @messages(list)

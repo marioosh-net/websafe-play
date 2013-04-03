@@ -38,6 +38,7 @@ import play.data.Form;
 import play.data.validation.ValidationError;
 import play.mvc.Controller;
 import play.mvc.Result;
+import play.mvc.Results.Chunks.Out;
 import views.html.index;
 import com.avaje.ebean.Ebean;
 import com.steadystate.css.parser.CSSOMParser;
@@ -60,13 +61,44 @@ public class Application extends Controller {
     	}
     	Message l = m.bindFromRequest().get();
     	try {
-			add(l);
+			add(l, null);
 			flash("info", "elem added");
 		} catch (IOException e) {
 			flash("error", "ERROR: " + e);
 			e.printStackTrace();
 		}
     	return redirect("/");
+    }
+    
+    public static Result asyncPost() {
+    	Logger.info("asyncPost");
+    	Form<Message> m = Form.form(Message.class);
+    	Form f = m.bindFromRequest();
+    	if(f.hasErrors()) {
+    		ValidationError e = f.error("");
+    		flash("error", e.message());
+    		f.fill(new Message());
+    		return badRequest(index.render(f, Message.find.all()));
+    		//return badRequest(f.errors().values()+"");
+    	}
+    	final Message l = m.bindFromRequest().get();
+    	
+    	Chunks<String> chunks = new StringChunks() {
+			
+			@Override
+			public void onReady(Chunks.Out<String> out) {
+				try {
+					add(l, out);
+					out.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		};
+    		
+		response().setContentType("text/html");
+		return ok(chunks);
     }
 
     public static String toBase64(URL url) throws IOException {
@@ -83,7 +115,11 @@ public class Application extends Controller {
 		*/
     }
     
-	private static void add(Message l) throws IOException {
+	private static void add(Message l, Out<String> out) throws IOException {
+		if(out != null) {
+			out.write("adding...");
+			out.write("<script>console.log('kiki')</script>");
+		}
 		Logger.info("adding...");
 		URL url = new URL(l.getUrl());
 		URLConnection c = url.openConnection();
@@ -105,7 +141,7 @@ public class Application extends Controller {
 		*/
 		
 		if(c.getContentType().startsWith("text/html")) {
-			String s = process(f, l.getUrl());
+			String s = process(f, l.getUrl(), out);
 			l.setData(s.getBytes());
 		} else {
 			in = new FileInputStream(f);
@@ -122,7 +158,7 @@ public class Application extends Controller {
 		return null;
 	}
 	
-	private static String process(File f, String sourceUrlString) {
+	private static String process(File f, String sourceUrlString, Out<String> out) {
 		try {
 			final URL sourceUrl=new URL(sourceUrlString);
 			Source source = new Source(f);
@@ -193,6 +229,7 @@ public class Application extends Controller {
 				    outputDocument.replace(startTag,sb);
 				    
 				    Logger.info("REPLACED css: "+href);
+				    if(out != null) out.write("REPLACED css: "+href);
 				    cssCount++;
 			    }
 			    
@@ -214,6 +251,7 @@ public class Application extends Controller {
 				    }});
 				    
 				    Logger.info("REPLACED img src: "+src);
+				    if(out != null) out.write("REPLACED img src: "+src);
 				    imgCount++;
 			    	
 			    }
@@ -229,6 +267,7 @@ public class Application extends Controller {
 				    String jsText;
 				    try {
 				    	Logger.info(new URL(sourceUrl,src).toString());
+				    	if(out != null) out.write(new URL(sourceUrl,src).toString());
 				    	jsText = Util.getString(new InputStreamReader(new URL(sourceUrl,src).openStream()));
 				    } catch (Exception ex) {
 				    	Logger.error(ex.toString());
@@ -242,6 +281,7 @@ public class Application extends Controller {
 				    outputDocument.replace(startTag,sb);
 				    
 				    Logger.info("REPLACED js: "+src);
+				    if(out != null) out.write("REPLACED js: "+src);
 				    scriptCount++;
 			    	
 			    }
@@ -249,6 +289,12 @@ public class Application extends Controller {
 			Logger.info("REPLACED css count: "+cssCount);
 			Logger.info("REPLACED img src count: "+imgCount);
 			Logger.info("REPLACED script count: "+scriptCount);
+			
+			if(out != null) {
+				out.write("REPLACED css count: "+cssCount);
+				out.write("REPLACED img src count: "+imgCount);
+				out.write("REPLACED script count: "+scriptCount);
+			}
 			
 			return outputDocument.toString();
 			
