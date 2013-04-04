@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -166,6 +167,31 @@ public class Application extends Controller {
 		*/
     }
     
+    /**
+     * sciaga plik i zwraca gotowy obiekt message
+     * @param url1
+     * @return
+     * @throws IOException
+     */
+    private static Message downloadFile(String url1) throws IOException {
+    	Message l = new Message();
+    	URL url = new URL(url1);
+		URLConnection c = url.openConnection();
+		c.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22");
+		InputStream in = c.getInputStream();
+		l.setUrl(url1);
+		l.setContentType(c.getContentType());		
+		File f = File.createTempFile(UUID.randomUUID().toString(), "");		
+		f.deleteOnExit();
+		FileOutputStream o = new FileOutputStream(f);
+		IOUtils.copy(in, o);
+		o.close();
+		in = new FileInputStream(f);
+		l.setData(IOUtils.toByteArray(in));
+		in.close();
+		return l;
+    }
+    
 	private static void add(Message l, Comet comet) throws IOException {
 		if(comet != null) comet.sendMessage("adding...");
 		Logger.info("adding...");
@@ -189,8 +215,11 @@ public class Application extends Controller {
 		*/
 		
 		if(c.getContentType().startsWith("text/html")) {
-			String s = process(f, l.getUrl(), comet);
-			l.setData(s.getBytes());
+			Object[] o1 = process(f, l.getUrl(), comet);
+			OutputDocument doc = (OutputDocument) o1[0];
+			List<Message> deps = (List<Message>) o1[1];
+			Logger.info(deps+"");
+			l.setData(doc.toString().getBytes());
 		} else {
 			in = new FileInputStream(f);
 			l.setData(IOUtils.toByteArray(in));
@@ -206,7 +235,16 @@ public class Application extends Controller {
 		return null;
 	}
 	
-	private static String process(File f, String sourceUrlString, Comet comet) {
+	/**
+	 * [0] - content (OutputDocument)
+	 * [1] - deps
+	 * @param f
+	 * @param sourceUrlString
+	 * @param comet
+	 * @return
+	 */
+	private static Object[] process(File f, String sourceUrlString, Comet comet) {
+		List<Message> deps = new ArrayList<Message>();
 		try {
 			final URL sourceUrl=new URL(sourceUrlString);
 			Source source = new Source(f);
@@ -317,16 +355,23 @@ public class Application extends Controller {
 				    	Logger.info(new URL(sourceUrl,src).toString());
 				    	if(comet != null) if(comet != null) comet.sendMessage(new URL(sourceUrl,src).toString());
 				    	jsText = Util.getString(new InputStreamReader(new URL(sourceUrl,src).openStream()));
+				    	Message m = downloadFile(new URL(sourceUrl,src).toString());
+				    	deps.add(m);
 				    } catch (Exception ex) {
 				    	Logger.error(ex.toString());
 				      continue; // don't convert if URL is invalid
 				    }
 				    sb.setLength(0);
+				    // sb.append("<!-- "+new URL(sourceUrl,src).toString()+" -->\n");
 				    sb.append("<script");
 				    Attribute typeAttribute=attributes.get("type");
 				    if (typeAttribute!=null) sb.append(' ').append(typeAttribute);
 				    sb.append(">\n").append(jsText).append("\n</script>");
 				    outputDocument.replace(startTag,sb);
+				    
+				    /*
+				    outputDocument.replace(attributes.get("src"), "/open/###/###");
+				    */
 				    
 				    Logger.info("REPLACED js: "+src);
 				    if(comet != null) comet.sendMessage("REPLACED js: "+src);
@@ -344,7 +389,7 @@ public class Application extends Controller {
 				comet.sendMessage("REPLACED script count: "+scriptCount);
 			}
 			
-			return outputDocument.toString();
+			return new Object[]{outputDocument, deps};
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -395,6 +440,16 @@ public class Application extends Controller {
 		}
 		m.appendTail(sb);
 		return sb.toString();
+	}
+	
+	/**
+	 * zwraca zalezny plik o numerze kolejnym nr dla pliku o identyfikatorze id 
+	 * @param id
+	 * @param nr
+	 * @return
+	 */
+	public static Result openDep(Long id, Long nr) {
+		return temporaryRedirect("/");
 	}
 	
 	public static Result open(Long id) {
