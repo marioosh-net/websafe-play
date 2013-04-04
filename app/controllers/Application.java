@@ -42,13 +42,18 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.Results.Chunks.Out;
 import views.html.index;
+import views.html.messages;
 import com.avaje.ebean.Ebean;
 import com.steadystate.css.parser.CSSOMParser;
 
 public class Application extends Controller {
 
     public static Result index() {
-        return ok(index.render(Form.form(Message.class), Message.find.orderBy("timestamp desc").findList()));
+        return ok(index.render(Form.form(Message.class), Message.find.setMaxRows(20).orderBy("timestamp desc").findList()));
+    }
+    
+    public static Result list() {
+    	return ok(messages.render(Message.find.setMaxRows(20).orderBy("timestamp desc").findList()));
     }
     
     public static Result post() {

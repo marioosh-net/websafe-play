@@ -11,10 +11,13 @@
     
     @form(action = routes.Application.post, 'id -> "form") {
         @inputText(myForm("url"), 'size -> 100, 'placeholder -> "http....", '_label -> "Some URL")
-        <input type="submit" value="ok" id="ok" />
-        <input type="button" value="okAsync" id="okAsync" />
+        @*<input type="submit" value="ok" id="ok" />*@
+        <input type="button" value="OK" id="okAsync" />
     }
     
     @*<input type="button" value="comet" id="comet" />*@
+    
+    <div id="list">
     @messages(list)
+    </div>
 }

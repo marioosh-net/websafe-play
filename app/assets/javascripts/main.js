@@ -55,7 +55,8 @@ function log(m) {
 	objDiv.scrollTop = objDiv.scrollHeight;
 	
 	if(m == 'DONE') {
-		window.location.reload();
+		// window.location.reload();
 		// lepiej byloby przeladowywac tylko liste 
+		$('#list').load('/list');
 	}
 }
