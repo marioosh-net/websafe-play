@@ -34,6 +34,7 @@ import org.w3c.dom.css.CSSStyleDeclaration;
 import org.w3c.dom.css.CSSStyleRule;
 import org.w3c.dom.css.CSSStyleSheet;
 import play.Logger;
+import play.cache.Cache;
 import play.data.Form;
 import play.data.validation.ValidationError;
 import play.libs.Comet;
@@ -49,11 +50,29 @@ import com.steadystate.css.parser.CSSOMParser;
 public class Application extends Controller {
 
     public static Result index() {
-        return ok(index.render(Form.form(Message.class), Message.find.setMaxRows(20).orderBy("timestamp desc").findList()));
+        return ok(index.render(Form.form(Message.class), getList()));
+    }
+    
+    private static List<Message> getList() {
+    	String uuid=session("uuid");
+    	if(uuid==null) {
+    		uuid=java.util.UUID.randomUUID().toString();
+    		session("uuid", uuid);
+    	}    	
+    	
+    	List<Message> list = (List<Message>) Cache.get(uuid+"list");
+    	if(list == null) {
+    		list = Message.find.setMaxRows(20).orderBy("timestamp desc").findList();
+    		Cache.set(uuid+"list", list);
+    	} else {
+    		Logger.info("get CACHED");
+    	}
+    	return list;
     }
     
     public static Result list() {
-    	return ok(messages.render(Message.find.setMaxRows(20).orderBy("timestamp desc").findList()));
+    	Cache.remove(session("uuid")+"list");    	
+    	return ok(messages.render(getList()));
     }
     
     public static Result post() {
