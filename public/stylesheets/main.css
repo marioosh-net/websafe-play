@@ -33,6 +33,7 @@ dd, dl {
 	height: 150px;
 	border: 1px solid silver;
 	overflow: auto;
+	font-family: courier;
 }
 iframe {
 	display: none;
