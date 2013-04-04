@@ -379,7 +379,7 @@ public class Application extends Controller {
 					url = new URL(baseUrl, m.group(2));
 				}
 				if(url != null) {
-					Logger.warn(m.group() + " => " + url.toString());
+					Logger.info(m.group() + " => " + url.toString());
 					try {
 						String b64 = toBase64(url);
 						m.appendReplacement(sb, Matcher.quoteReplacement(m.group(1)+b64+m.group(3)));
