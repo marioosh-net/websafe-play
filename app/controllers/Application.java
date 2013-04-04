@@ -237,7 +237,7 @@ public class Application extends Controller {
 				    String styleSheetContent;
 				    try {
 				      styleSheetContent = Util.getString(new InputStreamReader(new URL(sourceUrl,href).openStream()));
-				      styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href));
+				      styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
 				      // Message m = new Message();
 				    } catch (Exception ex) {
 				    	Logger.error(ex.toString());
@@ -355,9 +355,10 @@ public class Application extends Controller {
 	/**
 	 * replace all url() with base64
 	 * @param input
+	 * @param comet 
 	 * @return
 	 */
-	private static String processCss(String input, URL baseUrl) {
+	private static String processCss(String input, URL baseUrl, Comet comet) {
 
 		//StringBuffer sb = new StringBuffer(input.length());
 		StringBuffer sb = new StringBuffer();
@@ -380,6 +381,7 @@ public class Application extends Controller {
 				}
 				if(url != null) {
 					Logger.info(m.group() + " => " + url.toString());
+					if(comet != null) comet.sendMessage(m.group() + " => " + url.toString());
 					try {
 						String b64 = toBase64(url);
 						m.appendReplacement(sb, Matcher.quoteReplacement(m.group(1)+b64+m.group(3)));
