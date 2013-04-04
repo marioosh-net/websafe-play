@@ -5,9 +5,14 @@
 # Home page
 GET     /                           controllers.Application.index()
 POST    /post                           controllers.Application.post()
+GET    /asyncPost                           controllers.Application.asyncPost()
 POST    /asyncPost                           controllers.Application.asyncPost()
 GET     /open/:id                   controllers.Application.open(id: Long)
 GET     /comet                   controllers.Application.comet
+
+GET     /test                   controllers.Test.test
+GET     /comet1                   controllers.Test.comet
+GET     /chunks1                   controllers.Test.chunks
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

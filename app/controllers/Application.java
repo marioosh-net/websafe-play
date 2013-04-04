@@ -108,6 +108,7 @@ public class Application extends Controller {
 		    public void onConnected() {
 		    	try {
 					add(l, this);
+					sendMessage("DONE");
 					close();
 				} catch (IOException e) {
 					e.printStackTrace();
