@@ -73,17 +73,20 @@ public class Application extends Controller {
     }
     
     public static Result asyncPost() {
+    	final Message l;
     	Logger.info("asyncPost");
     	Form<Message> m = Form.form(Message.class);
-    	Form f = m.bindFromRequest();
+    	final Form f = m.bindFromRequest();
     	if(f.hasErrors()) {
     		ValidationError e = f.error("");
     		flash("error", e.message());
     		f.fill(new Message());
-    		return badRequest(index.render(f, Message.find.all()));
+    		// return badRequest(index.render(f, Message.find.all()));
     		//return badRequest(f.errors().values()+"");
+    		l = null;
+    	} else {
+    		l = m.bindFromRequest().get();
     	}
-    	final Message l = m.bindFromRequest().get();
     	
     	/*
     	Chunks<String> chunks = new StringChunks() {
@@ -107,6 +110,11 @@ public class Application extends Controller {
 		Comet comet = new Comet("parent.log") {
 		    public void onConnected() {
 		    	try {
+		    		if(l == null) {
+		    			sendMessage("ERROR: "+f.error("").message());
+		    			close();
+		    			return;
+		    		}
 					add(l, this);
 					sendMessage("DONE");
 					close();
