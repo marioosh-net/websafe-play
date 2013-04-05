@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 import model.Message;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.OutputDocument;
@@ -339,6 +341,16 @@ public class Application extends Controller {
 							m.setData(styleSheetContent.getBytes());
 						} else {
 							// unzip to text, replace etc...
+							Logger.info("UNZIP "+m.getUrl());
+							GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(m.getData()));
+							File f1 = File.createTempFile(UUID.randomUUID().toString(), "");
+							Logger.info(f1.getAbsolutePath());
+							FileOutputStream of = new FileOutputStream(f1);
+							IOUtils.copy(gzipInputStream, of);
+							of.close();
+							styleSheetContent = Util.getString(new FileReader(f1));
+							styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
+							m.setData(styleSheetContent.getBytes());							
 						}
 						deps.add(m);
 						outputDocument.replace(attributes.get("href"), "href=\"##"+depsCount++ +"##\"");
