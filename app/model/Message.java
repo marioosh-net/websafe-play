@@ -1,5 +1,6 @@
 package model;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.Column;
@@ -124,10 +125,11 @@ public class Message extends Model {
 		}
 		return null;
 	}
-	
+
 	@Override
 	public String toString() {
-		return url;
+		return "Message [id=" + id + ", timestamp=" + timestamp + ", url=" + url + ", contentType=" + contentType + ", data=byte[]" + ", parent=" + parent + ", dependencies=" + dependencies + "]";
 	}
 
+	
 }

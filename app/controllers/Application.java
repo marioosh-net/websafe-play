@@ -46,6 +46,7 @@ import play.mvc.Results.Chunks.Out;
 import views.html.index;
 import views.html.messages;
 import com.avaje.ebean.Ebean;
+import com.avaje.ebean.SqlQuery;
 import com.steadystate.css.parser.CSSOMParser;
 
 public class Application extends Controller {
@@ -220,13 +221,43 @@ public class Application extends Controller {
 			List<Message> deps = (List<Message>) o1[1];
 			Logger.info(deps+"");
 			l.setData(doc.toString().getBytes());
+    		Long mainId = Ebean.createSqlQuery("select nextval('message_seq') as seq, currval('message_seq')").findUnique().getLong("seq");
+    		Logger.info("mainId: "+ mainId);
+    		l.setId(mainId);
+			l.save();
+			in.close();
+
+			if(!deps.isEmpty()) {
+	    		String docString = doc.toString();
+	    		
+				Message main = Message.find.byId(mainId);
+				int i = 0;
+				for(Message d: deps) {
+					d.setParent(main);
+					Long dId = Ebean.createSqlQuery("select nextval('message_seq') as seq, currval('message_seq')").findUnique().getLong("seq");
+					Logger.info("dId: "+ dId);
+					d.setId(dId);
+					d.save();
+		    		docString = docString.replaceAll("##"+i+"##", "/open/"+dId);
+					i++;
+				}
+
+				// update main
+				Logger.info("update main: "+main);
+				main.setData(docString.getBytes());
+				main.update();
+				Logger.info("update main end");
+			}
+			/**
+			 * update deps
+			 */
 		} else {
 			in = new FileInputStream(f);
 			l.setData(IOUtils.toByteArray(in));
+			l.save();
+			in.close();
 		}
 		
-		l.save();
-		in.close();
 		Logger.debug(f.getAbsolutePath() + (f.delete() ? " deleted":" not deleted"));
 	}
 	
@@ -361,6 +392,7 @@ public class Application extends Controller {
 				    	Logger.error(ex.toString());
 				      continue; // don't convert if URL is invalid
 				    }
+				    /*
 				    sb.setLength(0);
 				    // sb.append("<!-- "+new URL(sourceUrl,src).toString()+" -->\n");
 				    sb.append("<script");
@@ -368,10 +400,9 @@ public class Application extends Controller {
 				    if (typeAttribute!=null) sb.append(' ').append(typeAttribute);
 				    sb.append(">\n").append(jsText).append("\n</script>");
 				    outputDocument.replace(startTag,sb);
-				    
-				    /*
-				    outputDocument.replace(attributes.get("src"), "/open/###/###");
 				    */
+				    
+				    outputDocument.replace(attributes.get("src"), "src=\"##"+scriptCount+"##\"");
 				    
 				    Logger.info("REPLACED js: "+src);
 				    if(comet != null) comet.sendMessage("REPLACED js: "+src);
