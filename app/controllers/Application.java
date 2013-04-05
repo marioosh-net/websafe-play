@@ -64,7 +64,7 @@ public class Application extends Controller {
     	
     	List<Message> list = (List<Message>) Cache.get(uuid+"list");
     	if(list == null) {
-    		list = Message.find.setMaxRows(20).orderBy("timestamp desc").findList();
+    		list = Message.find.setMaxRows(20).where().eq("parent", null).orderBy("timestamp desc").findList();
     		Cache.set(uuid+"list", list);
     	} else {
     		Logger.info("get CACHED");
@@ -227,6 +227,9 @@ public class Application extends Controller {
 			l.save();
 			in.close();
 
+			/**
+			 * update deps
+			 */
 			if(!deps.isEmpty()) {
 	    		String docString = doc.toString();
 	    		
@@ -248,9 +251,6 @@ public class Application extends Controller {
 				main.update();
 				Logger.info("update main end");
 			}
-			/**
-			 * update deps
-			 */
 		} else {
 			in = new FileInputStream(f);
 			l.setData(IOUtils.toByteArray(in));
@@ -285,6 +285,7 @@ public class Application extends Controller {
 			int cssCount = 0;
 			int scriptCount = 0;
 			int imgCount = 0;
+			int depsCount = 0;
 			
 			List all = source.getAllStartTags();
 			int k = 0;
@@ -305,49 +306,34 @@ public class Application extends Controller {
 				    if (href==null) continue;
 				    String styleSheetContent;
 				    try {
+				    	/*
 				      styleSheetContent = Util.getString(new InputStreamReader(new URL(sourceUrl,href).openStream()));
 				      styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
-				      // Message m = new Message();
+				      */
+
+						Message m = downloadFile(new URL(sourceUrl,href).toString());
+						styleSheetContent = Util.getString(new InputStreamReader(new ByteArrayInputStream(m.getData())));
+						styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
+						m.setData(styleSheetContent.getBytes());
+						deps.add(m);
+						outputDocument.replace(attributes.get("href"), "href=\"##"+depsCount++ +"##\"");
+					    Logger.info("REPLACED css: "+href);
+					    if(comet != null) if(comet != null) comet.sendMessage("REPLACED css: "+href);
+					    cssCount++;
+				      
 				    } catch (Exception ex) {
 				    	Logger.error(ex.toString());
 				      continue; // don't convert if URL is invalid
 				    }
 				    
-				    /**
-				     * css parser
-				     *
-					try {
-						CSSOMParser css = new CSSOMParser();
-						InputSource source1 = new InputSource(new StringReader(styleSheetContent));
-						CSSStyleSheet stylesheet = css.parseStyleSheet(source1, null, null);
-						CSSRuleList ruleList = stylesheet.getCssRules();
-						for (int k = 0; k < ruleList.getLength(); k++) {
-							CSSRule rule = ruleList.item(k);
-							if (rule instanceof CSSStyleRule) {
-								CSSStyleRule styleRule = (CSSStyleRule) rule;
-								Logger.info("selector:" + k + ": " + styleRule.getSelectorText());
-								CSSStyleDeclaration styleDeclaration = styleRule.getStyle();
-								for (int z = 0; z < styleDeclaration.getLength(); z++) {
-									String property = styleDeclaration.item(z);
-									Logger.info("property: " + property + " :: " + "value: " + styleDeclaration.getPropertyCSSValue(property).getCssText());  
-								}
-							}
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					*/			    
-				    
+				    /*
 				    sb.setLength(0);
 				    sb.append("<style");
 				    Attribute typeAttribute=attributes.get("type");
 				    if (typeAttribute!=null) sb.append(' ').append(typeAttribute);
 				    sb.append(">\n").append(styleSheetContent).append("\n</style>");
 				    outputDocument.replace(startTag,sb);
-				    
-				    Logger.info("REPLACED css: "+href);
-				    if(comet != null) if(comet != null) comet.sendMessage("REPLACED css: "+href);
-				    cssCount++;
+				    */
 			    }
 			    
 				/**
@@ -381,13 +367,17 @@ public class Application extends Controller {
 				    Attributes attributes=startTag.getAttributes();
 				    String src=attributes.getValue("src");
 				    if (src==null) continue;
-				    String jsText;
+				    // String jsText;
 				    try {
 				    	Logger.info(new URL(sourceUrl,src).toString());
 				    	if(comet != null) if(comet != null) comet.sendMessage(new URL(sourceUrl,src).toString());
-				    	jsText = Util.getString(new InputStreamReader(new URL(sourceUrl,src).openStream()));
+				    	// jsText = Util.getString(new InputStreamReader(new URL(sourceUrl,src).openStream()));
 				    	Message m = downloadFile(new URL(sourceUrl,src).toString());
 				    	deps.add(m);
+					    outputDocument.replace(attributes.get("src"), "src=\"##"+depsCount++ +"##\"");
+					    Logger.info("REPLACED js: "+src);
+					    if(comet != null) comet.sendMessage("REPLACED js: "+src);
+					    scriptCount++;
 				    } catch (Exception ex) {
 				    	Logger.error(ex.toString());
 				      continue; // don't convert if URL is invalid
@@ -401,12 +391,6 @@ public class Application extends Controller {
 				    sb.append(">\n").append(jsText).append("\n</script>");
 				    outputDocument.replace(startTag,sb);
 				    */
-				    
-				    outputDocument.replace(attributes.get("src"), "src=\"##"+scriptCount+"##\"");
-				    
-				    Logger.info("REPLACED js: "+src);
-				    if(comet != null) comet.sendMessage("REPLACED js: "+src);
-				    scriptCount++;
 			    	
 			    }
 			}
