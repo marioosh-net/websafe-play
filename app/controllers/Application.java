@@ -37,6 +37,7 @@ import play.mvc.Result;
 import views.html.index;
 import views.html.messages;
 import com.avaje.ebean.Ebean;
+import com.avaje.ebean.TxRunnable;
 
 public class Application extends Controller {
 
@@ -78,14 +79,19 @@ public class Application extends Controller {
     		return badRequest(index.render(f, Message.find.all()));
     		//return badRequest(f.errors().values()+"");
     	}
-    	Message l = m.bindFromRequest().get();
-    	try {
-			add(l, null);
-			flash("info", "elem added");
-		} catch (IOException e) {
-			flash("error", "ERROR: " + e);
-			e.printStackTrace();
-		}
+    	final Message l = m.bindFromRequest().get();
+		Ebean.execute(new TxRunnable() {
+			@Override
+			public void run() {
+		    	try {
+					add(l, null);
+					flash("info", "elem added");
+				} catch (IOException e) {
+					flash("error", "ERROR: " + e);
+					e.printStackTrace();
+				}
+			}
+		});    		
     	return redirect("/");
     }
     
@@ -211,6 +217,7 @@ public class Application extends Controller {
     }
     
 	private static void add(Message l, Comet  comet) throws IOException {
+				
 		if(comet != null) comet.sendMessage("adding...");
 		Logger.info("adding...");
 		URL url = new URL(l.getUrl());
@@ -220,12 +227,15 @@ public class Application extends Controller {
 		l.setContentType(c.getContentType());
 		l.setContentEncoding(c.getContentEncoding());
 		l.setHeaderFields(c.getHeaderFields());
+
+		/*
 		File f = File.createTempFile(UUID.randomUUID().toString(), "");
 		f.deleteOnExit();
 		Logger.info(f.getAbsolutePath());
 		FileOutputStream o = new FileOutputStream(f);
 		IOUtils.copy(in, o);
 		o.close();
+		*/
 		
 		/*
 		if(c.getContentType().startsWith("text/html")) {
@@ -234,7 +244,7 @@ public class Application extends Controller {
 		*/
 		
 		if(c.getContentType().startsWith("text/html")) {
-			Object[] o1 = process(f, l.getUrl(), comet);
+			Object[] o1 = process(in, l.getUrl(), comet);
 			OutputDocument doc = (OutputDocument) o1[0];
 			List<Message> deps = (List<Message>) o1[1];
 			l.setData(doc.toString().getBytes());
@@ -268,13 +278,13 @@ public class Application extends Controller {
 				main.update();
 			}
 		} else {
-			in = new FileInputStream(f);
+			// in = new FileInputStream(f);
 			l.setData(IOUtils.toByteArray(in));
 			l.save();
 			in.close();
 		}
 		
-		Logger.debug(f.getAbsolutePath() + (f.delete() ? " deleted":" not deleted"));
+		//Logger.debug(f.getAbsolutePath() + (f.delete() ? " deleted":" not deleted"));
 	}
 	
 	// lista powiazanych plikow, plik zrodlowy bedzie musial miec zmienione odnosniki
@@ -290,11 +300,11 @@ public class Application extends Controller {
 	 * @param comet
 	 * @return
 	 */
-	private static Object[] process(File f, String sourceUrlString, Comet comet) {
+	private static Object[] process(InputStream f, String sourceUrlString, Comet comet) {
 		List<Message> deps = new ArrayList<Message>();
 		try {
 			final URL sourceUrl=new URL(sourceUrlString);
-			Source source = new Source(f);
+			Source source = new Source(new InputStreamReader(f, "UTF-8"));
 			OutputDocument outputDocument = new OutputDocument(source);
 			StringBuilder sb=new StringBuilder();
 			
@@ -344,14 +354,19 @@ public class Application extends Controller {
 							Logger.info("UNZIP "+m.getUrl());
 							GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(m.getData()));
 							File f1 = File.createTempFile(UUID.randomUUID().toString(), "");
+							f1.deleteOnExit();
 							Logger.info(f1.getAbsolutePath());
 							FileOutputStream of = new FileOutputStream(f1);
 							IOUtils.copy(gzipInputStream, of);
 							of.close();
-							styleSheetContent = Util.getString(new FileReader(f1));
+							FileReader reader = new FileReader(f1);
+							styleSheetContent = Util.getString(reader);
 							styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
 							m.setData(styleSheetContent.getBytes());
 							m.setContentEncoding(null);
+							reader.close();
+							Logger.debug(f1.getAbsolutePath() + (f1.delete() ? " deleted":" not deleted"));
+							
 						}
 						deps.add(m);
 						outputDocument.replace(attributes.get("href"), "href=\"##"+depsCount++ +"##\"");
