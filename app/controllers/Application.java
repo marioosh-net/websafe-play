@@ -327,7 +327,7 @@ public class Application extends Controller {
 				      */
 
 						Message m = downloadFile(new URL(sourceUrl,href).toString());
-						if(!m.getContentEncoding().equals("gzip")) {
+						if(m.getContentEncoding() == null || !m.getContentEncoding().equals("gzip")) {
 							styleSheetContent = Util.getString(new InputStreamReader(new ByteArrayInputStream(m.getData())));
 							styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
 							m.setData(styleSheetContent.getBytes());
