@@ -8,6 +8,7 @@ create table message (
   timestamp                 timestamp,
   url                       varchar(1024),
   content_type              varchar(255),
+  content_encoding          varchar(255),
   data                      bytea,
   parent_id                 bigint,
   constraint pk_message primary key (id))
