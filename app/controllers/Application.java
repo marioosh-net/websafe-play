@@ -309,6 +309,13 @@ public class Application extends Controller {
 			    StartTag startTag=(StartTag)i.next();
 			    //Logger.info(startTag.getName());
 			    
+			    /**
+			     * wywal ewentualny base tag (linki sa relatywne do tego i sie pierdzieli)
+			     */
+			    if(startTag.getName().equalsIgnoreCase("base")) {
+			    	outputDocument.remove(startTag);
+			    }
+			    
 				/**
 				 * replace <link rel="stylesheet" href="<path>" .../>
 				 * with <style type="text/css"> code </style>
