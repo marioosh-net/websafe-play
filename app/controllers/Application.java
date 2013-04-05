@@ -350,7 +350,8 @@ public class Application extends Controller {
 							of.close();
 							styleSheetContent = Util.getString(new FileReader(f1));
 							styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
-							m.setData(styleSheetContent.getBytes());							
+							m.setData(styleSheetContent.getBytes());
+							m.setContentEncoding(null);
 						}
 						deps.add(m);
 						outputDocument.replace(attributes.get("href"), "href=\"##"+depsCount++ +"##\"");
