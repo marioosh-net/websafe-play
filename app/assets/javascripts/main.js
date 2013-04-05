@@ -63,10 +63,8 @@ function log(m) {
 
 window['openLink'] = openLink;
 function openLink(id, url) {
-	/*
-	jQuery.get('open.html?id='+id, function(data) {
+	jQuery.get('/click/'+id, function(data) {
 		jQuery('div.count_'+id).html(data);
 	}, 'text');
-	*/
 	window.open(url);
 }

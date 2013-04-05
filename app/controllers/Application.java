@@ -570,33 +570,15 @@ public class Application extends Controller {
 	}
 	
 	/**
-	 * test Comet socket
+	 * click/open link
+	 * @param id
 	 * @return
 	 */
-	public static Result comet() {
-		Comet comet = new Comet("parent.log") {
-			public void onConnected() {
-				
-				int i = 0;
-				while(1 == 1) {
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-					}
-					sendMessage("comet message "+i++);
-				}
-				//close();
-			}
-			
-			@Override
-			public void onDisconnected(Callback0 callback) {
-				sendMessage("disconnect");
-				close();
-			}
-		};
-		
-		// otwiera socket (nieskonczony response)
-		return ok(comet);
+	public static Result clickPlus(Long id) {
+		Message m = Message.find.byId(id);
+		m.setClicks(m.getClicks()+1);
+		m.update();
+		Cache.remove(session("uuid")+"list");
+		return ok(Message.find.byId(id).getClicks()+"");
 	}
-    
 }

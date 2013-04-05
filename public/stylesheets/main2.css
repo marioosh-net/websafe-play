@@ -176,7 +176,7 @@ label {
 /* content END */
 
 
-#footer a {
+#footer a, #footer {
 	color: #fff;
 }
 #footer a:hover {
@@ -826,4 +826,8 @@ a.del .button-text:hover, a.del:hover {
 }
 iframe {
 	display: none;
+}
+.log-header {
+	font-family: courier;
+	font-size: 1.1em;
 }

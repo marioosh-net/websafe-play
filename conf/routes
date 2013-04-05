@@ -9,7 +9,7 @@ POST    /post                           controllers.Application.post()
 GET    /asyncPost                           controllers.Application.asyncPost()
 POST    /asyncPost                           controllers.Application.asyncPost()
 GET     /open/:id                   controllers.Application.open(id: Long)
-GET     /comet                   controllers.Application.comet
+GET		/click/:id					controllers.Application.clickPlus(id: Long)
 
 GET     /test                   controllers.Test.test
 GET     /comet1                   controllers.Test.comet
