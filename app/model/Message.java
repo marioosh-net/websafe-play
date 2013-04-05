@@ -3,6 +3,7 @@ package model;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -27,6 +28,7 @@ public class Message extends Model {
 	String url;
 	
 	String contentType;
+	String contentEncoding;
 
 	private byte[] data;
 	
@@ -36,7 +38,6 @@ public class Message extends Model {
 	@OneToMany(mappedBy="parent")
 	List<Message> dependencies;
 
-	
 	public Message() {
 		// TODO Auto-generated constructor stub
 	}
@@ -118,6 +119,14 @@ public class Message extends Model {
 	public void setDependencies(List<Message> dependencies) {
 		this.dependencies = dependencies;
 	}
+	
+	public String getContentEncoding() {
+		return contentEncoding;
+	}
+	
+	public void setContentEncoding(String contentEncoding) {
+		this.contentEncoding = contentEncoding;
+	}
 
 	public String validate() {
 		if(url.isEmpty() || (!url.startsWith("http://") && !url.startsWith("file://") && !url.startsWith("https://") && !url.startsWith("ftp://"))) {
@@ -131,5 +140,13 @@ public class Message extends Model {
 		return "Message [id=" + id + ", timestamp=" + timestamp + ", url=" + url + ", contentType=" + contentType + ", data=byte[]" + ", parent=" + parent + ", dependencies=" + dependencies + "]";
 	}
 
+	private transient Map<String,List<String>> headerFields;
+	public Map<String, List<String>> getHeaderFields() {
+		return headerFields;
+	}
+	
+	public void setHeaderFields(Map<String, List<String>> headerFields) {
+		this.headerFields = headerFields;
+	}
 	
 }

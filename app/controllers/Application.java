@@ -194,7 +194,9 @@ public class Application extends Controller {
 		}
 		
 		l.setUrl(url1);
-		l.setContentType(c.getContentType());		
+		l.setContentType(c.getContentType());
+		l.setContentEncoding(c.getContentEncoding());
+		l.setHeaderFields(c.getHeaderFields());
 		File f = File.createTempFile(UUID.randomUUID().toString(), "");		
 		f.deleteOnExit();
 		FileOutputStream o = new FileOutputStream(f);
@@ -206,15 +208,17 @@ public class Application extends Controller {
 		return l;
     }
     
-	private static void add(Message l, Comet comet) throws IOException {
+	private static void add(Message l, Comet  comet) throws IOException {
 		if(comet != null) comet.sendMessage("adding...");
 		Logger.info("adding...");
 		URL url = new URL(l.getUrl());
 		URLConnection c = url.openConnection();
 		c.addRequestProperty("User-Agent", DEFAULT_USER_AGENT);
 		InputStream in = c.getInputStream();
-		l.setContentType(c.getContentType());		
-		
+		l.setContentType(c.getContentType());
+		l.setContentEncoding(c.getContentEncoding());
+		Logger.info(c.getContentEncoding());
+		l.setHeaderFields(c.getHeaderFields());
 		File f = File.createTempFile(UUID.randomUUID().toString(), "");
 		f.deleteOnExit();
 		Logger.info(f.getAbsolutePath());
@@ -232,10 +236,8 @@ public class Application extends Controller {
 			Object[] o1 = process(f, l.getUrl(), comet);
 			OutputDocument doc = (OutputDocument) o1[0];
 			List<Message> deps = (List<Message>) o1[1];
-			Logger.info(deps+"");
 			l.setData(doc.toString().getBytes());
     		Long mainId = Ebean.createSqlQuery("select nextval('message_seq') as seq, currval('message_seq')").findUnique().getLong("seq");
-    		Logger.info("mainId: "+ mainId);
     		l.setId(mainId);
 			l.save();
 			in.close();
@@ -244,6 +246,9 @@ public class Application extends Controller {
 			 * update deps
 			 */
 			if(!deps.isEmpty()) {
+				Logger.debug(deps+"");
+				Logger.info("DEPENDENCIES count: "+deps.size());
+				if(comet != null) comet.sendMessage("DEPENDENCIES count: "+deps.size());
 	    		String docString = doc.toString();
 	    		
 				Message main = Message.find.byId(mainId);
@@ -251,7 +256,6 @@ public class Application extends Controller {
 				for(Message d: deps) {
 					d.setParent(main);
 					Long dId = Ebean.createSqlQuery("select nextval('message_seq') as seq, currval('message_seq')").findUnique().getLong("seq");
-					Logger.info("dId: "+ dId);
 					d.setId(dId);
 					d.save();
 		    		docString = docString.replaceAll("##"+i+"##", "/open/"+dId);
@@ -259,10 +263,8 @@ public class Application extends Controller {
 				}
 
 				// update main
-				Logger.info("update main: "+main);
 				main.setData(docString.getBytes());
 				main.update();
-				Logger.info("update main end");
 			}
 		} else {
 			in = new FileInputStream(f);
@@ -325,9 +327,11 @@ public class Application extends Controller {
 				      */
 
 						Message m = downloadFile(new URL(sourceUrl,href).toString());
-						styleSheetContent = Util.getString(new InputStreamReader(new ByteArrayInputStream(m.getData())));
-						styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
-						m.setData(styleSheetContent.getBytes());
+						if(!m.getContentEncoding().equals("gzip")) {
+							styleSheetContent = Util.getString(new InputStreamReader(new ByteArrayInputStream(m.getData())));
+							styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
+							m.setData(styleSheetContent.getBytes());
+						}
 						deps.add(m);
 						outputDocument.replace(attributes.get("href"), "href=\"##"+depsCount++ +"##\"");
 					    Logger.info("REPLACED css: "+href);
@@ -365,6 +369,17 @@ public class Application extends Controller {
 				    Message m = downloadFile(photoUrl);
 				    deps.add(m);
 				    outputDocument.replace(attributes.get("src"), "src=\"##"+depsCount++ +"##\"");
+
+				    /**
+				     * Lazy Load Plugin for jQuery
+				     */
+				    final String src1=attributes.getValue("data-original");				    
+				    if(src1 != null) {
+					    String photoUrl1 = (src1.startsWith("http") ? new URL(src1) : new URL(sourceUrl,src1)).toString();
+					    Message m1 = downloadFile(photoUrl1);
+					    deps.add(m1);
+					    outputDocument.replace(attributes.get("data-original"), "data-original=\"##"+depsCount++ +"##\"");
+				    }
 				    
 				    /*
 				    outputDocument.replace(attributes, new HashMap<String, String>(){{
@@ -477,16 +492,6 @@ public class Application extends Controller {
 		return sb.toString();
 	}
 	
-	/**
-	 * zwraca zalezny plik o numerze kolejnym nr dla pliku o identyfikatorze id 
-	 * @param id
-	 * @param nr
-	 * @return
-	 */
-	public static Result openDep(Long id, Long nr) {
-		return temporaryRedirect("/");
-	}
-	
 	public static Result open(Long id) {
 		Message m = Ebean.find(Message.class, id);//Message.find.byId(id);
 		if(m == null) {
@@ -494,6 +499,9 @@ public class Application extends Controller {
 		}
 		try {
 			response().setContentType(m.getContentType());
+			if(m.getContentEncoding() != null) {
+				response().setHeader(CONTENT_ENCODING, m.getContentEncoding());
+			}
 			// response().setHeader("Content-Disposition", "inline; filename=\"myfile.txt\"");
 			return m.getData() != null ? ok(IOUtils.toBufferedInputStream(new ByteArrayInputStream(m.getData()))) : ok("no data");
 		} catch (IOException e) {
