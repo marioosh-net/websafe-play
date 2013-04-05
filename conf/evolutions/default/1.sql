@@ -9,6 +9,9 @@ create table message (
   url                       varchar(1024),
   content_type              varchar(255),
   content_encoding          varchar(255),
+  description               varchar(1024),
+  title                     varchar(1024),
+  clicks                    integer,
   data                      bytea,
   parent_id                 bigint,
   constraint pk_message primary key (id))

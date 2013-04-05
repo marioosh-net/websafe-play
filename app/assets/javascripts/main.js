@@ -60,3 +60,13 @@ function log(m) {
 		$('#list').load('/list');
 	}
 }
+
+window['openLink'] = openLink;
+function openLink(id, url) {
+	/*
+	jQuery.get('open.html?id='+id, function(data) {
+		jQuery('div.count_'+id).html(data);
+	}, 'text');
+	*/
+	window.open(url);
+}

@@ -2,6 +2,27 @@
 
 <ul>
 @for(m <- messages) {
-    <li><a class="link" href="/open/@m.getId()" target="_blank">@m.getUrl()</a> <span class="content-type">@m.getContentType()</span> | <a href="@m.getUrl()" target="_blank">original</a></li>
+    @*<li><a class="link" href="/open/@m.getId()" target="_blank">@m.getUrl()</a> <span class="content-type">@m.getContentType()</span> | <a href="@m.getUrl()" target="_blank">original</a></li>*@
+    
+    
+    
+    <div class="link-item link-item_@m.getId()">
+                      			<div class="clicks count_@m.getId()">@m.getClicks()<div><img class="ajax_@m.getId()" style="display:none;" src="images/ajax.gif"></div></div>
+                      			<div class="link-data">
+                      				<div>
+									<div class="link-item-title">
+									<a href="#" title="@m.getUrl()" onclick="openLink(@m.getId(),'@m.getUrl()'); return false;" class="name ">@m.getTitle()</a>
+									</div>                   				
+									<a href="index.html?site=1&amp;q=@m.getUrl()" class="link-item-source">@m.getUrl()</a>
+									<span class="link-item-teaser">— <span class="descr">@m.getDescription()</span><span class="timestamp">@m.getTimestamp()</span></span>										
+                      				</div>
+                      				
+                                    <div class="tags">
+                                            <span class="tag">  
+                                            </span>                                     
+                                    </div>
+                      			</div>
+                      			<div style="clear: both;"></div>
+                      		</div>
 }
 </ul>

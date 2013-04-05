@@ -244,12 +244,15 @@ public class Application extends Controller {
 		*/
 		
 		if(c.getContentType().startsWith("text/html")) {
-			Object[] o1 = process(in, l.getUrl(), comet);
+			Object[] o1 = process(in, l, comet);
 			OutputDocument doc = (OutputDocument) o1[0];
 			List<Message> deps = (List<Message>) o1[1];
 			l.setData(doc.toString().getBytes());
     		Long mainId = Ebean.createSqlQuery("select nextval('message_seq') as seq, currval('message_seq')").findUnique().getLong("seq");
     		l.setId(mainId);
+    		if(l.getTitle() == null) {
+    			l.setTitle(l.getUrl());
+    		}
 			l.save();
 			in.close();
 
@@ -300,7 +303,8 @@ public class Application extends Controller {
 	 * @param comet
 	 * @return
 	 */
-	private static Object[] process(InputStream f, String sourceUrlString, Comet comet) {
+	private static Object[] process(InputStream f, Message l, Comet comet) {
+		String sourceUrlString = l.getUrl();
 		List<Message> deps = new ArrayList<Message>();
 		try {
 			final URL sourceUrl=new URL(sourceUrlString);
@@ -319,6 +323,25 @@ public class Application extends Controller {
 				sb=new StringBuilder();
 			    StartTag startTag=(StartTag)i.next();
 			    //Logger.info(startTag.getName());
+			    
+			    /**
+			     * title
+			     */
+			    if(startTag.getName().equalsIgnoreCase("title")) {
+			    	Logger.info("TITLE: "+startTag.getElement().getTextExtractor().toString());
+			    	l.setTitle(startTag.getElement().getTextExtractor().toString());
+			    }
+			    
+			    /**
+			     * description
+			     */
+			    if(startTag.getName().equalsIgnoreCase("meta")) {
+			    	Attributes a = startTag.getAttributes();
+			    	if(a.getValue("name") != null && a.getValue("name").equalsIgnoreCase("description")) {
+			    		Logger.info("DESCRIPTION: "+a.getValue("content"));
+			    		l.setDescription(a.getValue("content"));
+			    	}
+			    }
 			    
 			    /**
 			     * wywal ewentualny base tag (linki sa relatywne do tego i sie pierdzieli)

@@ -29,7 +29,15 @@ public class Message extends Model {
 	
 	String contentType;
 	String contentEncoding;
+	
+	@Column(length=1024)
+	String description;
+	
+	@Column(length=1024)
+	String title;
 
+	int clicks = 0;
+	
 	private byte[] data;
 	
 	@ManyToOne
@@ -126,6 +134,36 @@ public class Message extends Model {
 	
 	public void setContentEncoding(String contentEncoding) {
 		this.contentEncoding = contentEncoding;
+	}
+	
+	
+	public String getDescription() {
+		return description;
+	}
+	
+	
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+	
+	public String getTitle() {
+		return title;
+	}
+	
+	
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	
+	
+	public int getClicks() {
+		return clicks;
+	}
+	
+	
+	public void setClicks(int clicks) {
+		this.clicks = clicks;
 	}
 
 	public String validate() {
