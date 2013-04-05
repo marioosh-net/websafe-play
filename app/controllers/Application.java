@@ -7,33 +7,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import model.Message;
-import net.htmlparser.jericho.Attribute;
 import net.htmlparser.jericho.Attributes;
-import net.htmlparser.jericho.HTMLElementName;
 import net.htmlparser.jericho.OutputDocument;
 import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.Util;
 import org.apache.commons.io.IOUtils;
-import org.w3c.css.sac.CSSParseException;
-import org.w3c.css.sac.InputSource;
-import org.w3c.dom.css.CSSRule;
-import org.w3c.dom.css.CSSRuleList;
-import org.w3c.dom.css.CSSStyleDeclaration;
-import org.w3c.dom.css.CSSStyleRule;
-import org.w3c.dom.css.CSSStyleSheet;
 import play.Logger;
 import play.cache.Cache;
 import play.data.Form;
@@ -42,16 +32,15 @@ import play.libs.Comet;
 import play.libs.F.Callback0;
 import play.mvc.Controller;
 import play.mvc.Result;
-import play.mvc.Results.Chunks.Out;
 import views.html.index;
 import views.html.messages;
 import com.avaje.ebean.Ebean;
-import com.avaje.ebean.SqlQuery;
-import com.steadystate.css.parser.CSSOMParser;
 
 public class Application extends Controller {
 
-    public static Result index() {
+    private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22";
+
+	public static Result index() {
         return ok(index.render(Form.form(Message.class), getList()));
     }
     
@@ -178,8 +167,32 @@ public class Application extends Controller {
     	Message l = new Message();
     	URL url = new URL(url1);
 		URLConnection c = url.openConnection();
-		c.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22");
+		c.addRequestProperty("User-Agent", DEFAULT_USER_AGENT);
 		InputStream in = c.getInputStream();
+
+    	/**
+    	 * wada:
+    	 * jak jest przekierowanie Status 302, 
+    	 * to np. zamiast zwrocic png, zwroci stronke html
+    	 * 
+    	 * obsluga 302
+    	 */
+		Integer code = null;
+		String location302 = null;
+		if(c instanceof HttpURLConnection) {
+			HttpURLConnection hc = (HttpURLConnection) c;
+			code = hc.getResponseCode();
+			if(code != null && code == 302) {
+				location302 = hc.getHeaderField("Location");
+				url1 = location302;
+				in.close();
+				url = new URL(location302);
+				c = url.openConnection();
+				c.addRequestProperty("User-Agent", DEFAULT_USER_AGENT);
+				in = c.getInputStream();
+			}
+		}
+		
 		l.setUrl(url1);
 		l.setContentType(c.getContentType());		
 		File f = File.createTempFile(UUID.randomUUID().toString(), "");		
@@ -198,7 +211,7 @@ public class Application extends Controller {
 		Logger.info("adding...");
 		URL url = new URL(l.getUrl());
 		URLConnection c = url.openConnection();
-		c.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22");
+		c.addRequestProperty("User-Agent", DEFAULT_USER_AGENT);
 		InputStream in = c.getInputStream();
 		l.setContentType(c.getContentType());		
 		
@@ -348,10 +361,17 @@ public class Application extends Controller {
 				    // Logger.info("img: "+src);
 				    // toBase64(src);
 				    
+				    String photoUrl = (src.startsWith("http") ? new URL(src) : new URL(sourceUrl,src)).toString();
+				    Message m = downloadFile(photoUrl);
+				    deps.add(m);
+				    outputDocument.replace(attributes.get("src"), "src=\"##"+depsCount++ +"##\"");
+				    
+				    /*
 				    outputDocument.replace(attributes, new HashMap<String, String>(){{
 				    	// put("src","http://www.copywriting.pl/wp-content/uploads/2011/09/udana-nazwa.jpg");
 				    	put("src",toBase64(src.startsWith("http") ? new URL(src) : new URL(sourceUrl, src)));
 				    }});
+				    */
 				    
 				    Logger.info("REPLACED img src: "+src);
 				    if(comet != null) if(comet != null) comet.sendMessage("REPLACED img src: "+src);
