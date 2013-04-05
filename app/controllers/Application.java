@@ -76,7 +76,7 @@ public class Application extends Controller {
     		ValidationError e = f.error("");
     		flash("error", e.message());
     		f.fill(new Message());
-    		return badRequest(index.render(f, Message.find.all()));
+    		return badRequest(index.render(f, getList()));
     		//return badRequest(f.errors().values()+"");
     	}
     	final Message l = m.bindFromRequest().get();

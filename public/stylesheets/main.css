@@ -1,5 +1,5 @@
 body, html {
-	font-family: verdana, arial, tahoma, serif;
+	font-family: Verdana, sans-serif;
 	font-size: 0.9em;
 }
 .content-type {
@@ -15,6 +15,8 @@ body, html {
 .title {
     font-weight: bold;
     font-size: 1.5em;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 form {

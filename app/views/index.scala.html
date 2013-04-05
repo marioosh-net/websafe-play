@@ -2,18 +2,18 @@
 @import helper._
 @main("webSafe") {
 
-    @*
-    <form method="post" action="/post">
-        <input type="text" name="url"/>
-        <input type="submit" value="ok"/>
+    <form method="post" action="/post" id="form">
+        URL <input type="text" name="url" size="100"/>
+        <input type="button" value="Save" id="okAsync" />
     </form>
-    *@
     
+    @*
     @form(action = routes.Application.post, 'id -> "form") {
-        @inputText(myForm("url"), 'size -> 100, 'placeholder -> "http....", '_label -> "Some URL")
-        @*<input type="submit" value="ok" id="ok" />*@
+        @inputText(myForm("url"), 'size -> 100, 'placeholder -> "http...", '_label -> "")
+        <input type="submit" value="ok" id="ok" />
         <input type="button" value="OK" id="okAsync" />
     }
+    *@
     
     @*<input type="button" value="comet" id="comet" />*@
     
