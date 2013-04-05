@@ -2,6 +2,6 @@
 
 <ul>
 @for(m <- messages) {
-    <li><a href="/open/@m.getId()" target="_blank">@m.getUrl()<span class="content-type">@m.getContentType()</span></a> | <a href="@m.getUrl()" target="_blank">original</a></li>
+    <li><a class="link" href="/open/@m.getId()" target="_blank">@m.getUrl()</a> <span class="content-type">@m.getContentType()</span> | <a href="@m.getUrl()" target="_blank">original</a></li>
 }
 </ul>

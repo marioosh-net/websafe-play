@@ -217,7 +217,6 @@ public class Application extends Controller {
 		InputStream in = c.getInputStream();
 		l.setContentType(c.getContentType());
 		l.setContentEncoding(c.getContentEncoding());
-		Logger.info(c.getContentEncoding());
 		l.setHeaderFields(c.getHeaderFields());
 		File f = File.createTempFile(UUID.randomUUID().toString(), "");
 		f.deleteOnExit();
@@ -338,6 +337,8 @@ public class Application extends Controller {
 							styleSheetContent = Util.getString(new InputStreamReader(new ByteArrayInputStream(m.getData())));
 							styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
 							m.setData(styleSheetContent.getBytes());
+						} else {
+							// unzip to text, replace etc...
 						}
 						deps.add(m);
 						outputDocument.replace(attributes.get("href"), "href=\"##"+depsCount++ +"##\"");
