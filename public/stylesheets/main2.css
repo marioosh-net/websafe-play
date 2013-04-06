@@ -823,6 +823,7 @@ a.del .button-text:hover, a.del:hover {
 	border: 1px solid silver;
 	overflow: auto;
 	font-family: courier;
+	display: none;
 }
 iframe {
 	display: none;
@@ -830,4 +831,5 @@ iframe {
 .log-header {
 	font-family: courier;
 	font-size: 1.1em;
+	cursor: pointer;
 }

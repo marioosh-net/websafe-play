@@ -246,7 +246,7 @@ public class Application extends Controller {
 		*/
 		
 		if(c.getContentType().startsWith("text/html")) {
-			Object[] o1 = process(in, l, comet);
+			Object[] o1 = process(c, l, comet);
 			OutputDocument doc = (OutputDocument) o1[0];
 			List<Message> deps = (List<Message>) o1[1];
 			l.setData(doc.toString().getBytes());
@@ -306,12 +306,12 @@ public class Application extends Controller {
 	 * @param comet
 	 * @return
 	 */
-	private static Object[] process(InputStream f, Message l, Comet comet) {
+	private static Object[] process(URLConnection c, Message l, Comet comet) {
 		String sourceUrlString = l.getUrl();
 		List<Message> deps = new ArrayList<Message>();
 		try {
 			final URL sourceUrl=new URL(sourceUrlString);
-			Source source = new Source(new InputStreamReader(f, "UTF-8"));
+			Source source = new Source(c);
 			// TODO
 			// Source source = new Source(sourceUrl); // to get title and description in good encoding
 			OutputDocument outputDocument = new OutputDocument(source);

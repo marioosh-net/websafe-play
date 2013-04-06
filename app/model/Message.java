@@ -1,5 +1,7 @@
 package model;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -186,5 +188,12 @@ public class Message extends Model {
 	public void setHeaderFields(Map<String, List<String>> headerFields) {
 		this.headerFields = headerFields;
 	}
-	
+
+	public String getHostName() {
+		try {
+			return new URL(url).getHost();
+		} catch (MalformedURLException e) {
+			return "";
+		}
+	}	
 }

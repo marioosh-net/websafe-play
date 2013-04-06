@@ -3,6 +3,9 @@ $(document).ready(function(){
 	$('#url').focus();
 	
 	$('#okAsync').click(function(){
+		if(!$('#log').is(":visible")) {
+			$('#log').slideToggle();
+		}
 		$('body').append('<iframe src="/asyncPost?'+$('#form').serialize()+'"></iframe>');
 		/*
 		$.ajax({
@@ -44,6 +47,10 @@ $(document).ready(function(){
 		});		
 	});	
 	
+	$('.log-header').click(function() {
+		$('#log').slideToggle();
+	});
+	
 });
 
 window['log'] = log
@@ -58,6 +65,9 @@ function log(m) {
 		// window.location.reload();
 		// lepiej byloby przeladowywac tylko liste 
 		$('#list').load('/list');
+		if($('#log').is(":visible")) {
+			$('#log').delay(2000).slideToggle();
+		}
 	}
 }
 
