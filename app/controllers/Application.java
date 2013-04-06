@@ -309,7 +309,9 @@ public class Application extends Controller {
 		List<Message> deps = new ArrayList<Message>();
 		try {
 			final URL sourceUrl=new URL(sourceUrlString);
-			Source source = new Source(sourceUrl);//new InputStreamReader(f, "UTF-8"));
+			Source source = new Source(new InputStreamReader(f, "UTF-8"));
+			// TODO
+			// Source source = new Source(sourceUrl); // to get title and description in good encoding
 			OutputDocument outputDocument = new OutputDocument(source);
 			StringBuilder sb=new StringBuilder();
 			
