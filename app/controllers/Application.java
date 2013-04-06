@@ -282,6 +282,7 @@ public class Application extends Controller {
 			}
 		} else {
 			// in = new FileInputStream(f);
+			l.setTitle(l.getUrl());
 			l.setData(IOUtils.toByteArray(in));
 			l.save();
 			in.close();
