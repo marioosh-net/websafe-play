@@ -171,7 +171,7 @@ public class Application extends Controller {
      * @return
      * @throws IOException
      */
-    private static Message downloadFile(String url1) throws IOException {
+    private static Message downloadFile(String url1, Comet comet) throws IOException {
     	Message l = new Message();
     	URL url = new URL(url1);
 		URLConnection c = url.openConnection();
@@ -199,6 +199,8 @@ public class Application extends Controller {
 				c.addRequestProperty("User-Agent", DEFAULT_USER_AGENT);
 				in = c.getInputStream();
 			}
+			Logger.info(code + " " + url1);
+			if(comet != null) comet.sendMessage(code + " " + url1);
 		}
 		
 		l.setUrl(url1);
@@ -370,7 +372,7 @@ public class Application extends Controller {
 				      styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
 				      */
 
-						Message m = downloadFile(new URL(sourceUrl,href).toString());
+						Message m = downloadFile(new URL(sourceUrl,href).toString(), comet);
 						if(m.getContentEncoding() == null || !m.getContentEncoding().equals("gzip")) {
 							styleSheetContent = Util.getString(new InputStreamReader(new ByteArrayInputStream(m.getData())));
 							styleSheetContent = processCss(styleSheetContent, new URL(new URL(sourceUrlString),href), comet);
@@ -381,7 +383,7 @@ public class Application extends Controller {
 							GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(m.getData()));
 							File f1 = File.createTempFile(UUID.randomUUID().toString(), "");
 							f1.deleteOnExit();
-							Logger.info(f1.getAbsolutePath());
+							//Logger.info(f1.getAbsolutePath());
 							FileOutputStream of = new FileOutputStream(f1);
 							IOUtils.copy(gzipInputStream, of);
 							of.close();
@@ -397,7 +399,7 @@ public class Application extends Controller {
 						deps.add(m);
 						outputDocument.replace(attributes.get("href"), "href=\"##"+depsCount++ +"##\"");
 					    Logger.info("REPLACED css: "+href);
-					    if(comet != null) if(comet != null) comet.sendMessage("REPLACED css: "+href);
+					    if(comet != null) comet.sendMessage("REPLACED css: "+href);
 					    cssCount++;
 				      
 				    } catch (Exception ex) {
@@ -426,33 +428,37 @@ public class Application extends Controller {
 				    
 				    // Logger.info("img: "+src);
 				    // toBase64(src);
-				    
-				    String photoUrl = (src.startsWith("http") ? new URL(src) : new URL(sourceUrl,src)).toString();
-				    Message m = downloadFile(photoUrl);
-				    deps.add(m);
-				    outputDocument.replace(attributes.get("src"), "src=\"##"+depsCount++ +"##\"");
-
-				    /**
-				     * Lazy Load Plugin for jQuery
-				     */
-				    final String src1=attributes.getValue("data-original");				    
-				    if(src1 != null) {
-					    String photoUrl1 = (src1.startsWith("http") ? new URL(src1) : new URL(sourceUrl,src1)).toString();
-					    Message m1 = downloadFile(photoUrl1);
-					    deps.add(m1);
-					    outputDocument.replace(attributes.get("data-original"), "data-original=\"##"+depsCount++ +"##\"");
+				    try {
+					    String photoUrl = (src.startsWith("http") ? new URL(src) : new URL(sourceUrl,src)).toString();
+					    Message m = downloadFile(photoUrl, comet);
+					    deps.add(m);
+					    outputDocument.replace(attributes.get("src"), "src=\"##"+depsCount++ +"##\"");
+	
+					    /**
+					     * Lazy Load Plugin for jQuery
+					     */
+					    final String src1=attributes.getValue("data-original");				    
+					    if(src1 != null) {
+						    String photoUrl1 = (src1.startsWith("http") ? new URL(src1) : new URL(sourceUrl,src1)).toString();
+						    Message m1 = downloadFile(photoUrl1, comet);
+						    deps.add(m1);
+						    outputDocument.replace(attributes.get("data-original"), "data-original=\"##"+depsCount++ +"##\"");
+					    }
+					    
+					    /*
+					    outputDocument.replace(attributes, new HashMap<String, String>(){{
+					    	// put("src","http://www.copywriting.pl/wp-content/uploads/2011/09/udana-nazwa.jpg");
+					    	put("src",toBase64(src.startsWith("http") ? new URL(src) : new URL(sourceUrl, src)));
+					    }});
+					    */
+					    
+					    Logger.info("REPLACED img src: "+src);
+					    if(comet != null) if(comet != null) comet.sendMessage("REPLACED img src: "+src);
+					    imgCount++;
+				    } catch (Exception e) {
+				    	Logger.error(e.toString());
+				    	continue;
 				    }
-				    
-				    /*
-				    outputDocument.replace(attributes, new HashMap<String, String>(){{
-				    	// put("src","http://www.copywriting.pl/wp-content/uploads/2011/09/udana-nazwa.jpg");
-				    	put("src",toBase64(src.startsWith("http") ? new URL(src) : new URL(sourceUrl, src)));
-				    }});
-				    */
-				    
-				    Logger.info("REPLACED img src: "+src);
-				    if(comet != null) if(comet != null) comet.sendMessage("REPLACED img src: "+src);
-				    imgCount++;
 			    	
 			    }
 			    
@@ -469,7 +475,7 @@ public class Application extends Controller {
 				    	Logger.info(new URL(sourceUrl,src).toString());
 				    	if(comet != null) if(comet != null) comet.sendMessage(new URL(sourceUrl,src).toString());
 				    	// jsText = Util.getString(new InputStreamReader(new URL(sourceUrl,src).openStream()));
-				    	Message m = downloadFile(new URL(sourceUrl,src).toString());
+				    	Message m = downloadFile(new URL(sourceUrl,src).toString(), comet);
 				    	deps.add(m);
 					    outputDocument.replace(attributes.get("src"), "src=\"##"+depsCount++ +"##\"");
 					    Logger.info("REPLACED js: "+src);
