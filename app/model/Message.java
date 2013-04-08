@@ -57,6 +57,7 @@ public class Message extends Model {
 		this.tags = new HashSet<Tag>();
 		final Message _this = this;
 		for(String tag: tags.split("\\s*\\,\\s*")) {
+			try {
 			Tag t = Tag.find.where().eq("name", tag).findUnique();
 			if(t == null) {
 				t = new Tag(tag);
@@ -68,6 +69,9 @@ public class Message extends Model {
 				add(_this);
 			}});
 			this.tags.add(t);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
