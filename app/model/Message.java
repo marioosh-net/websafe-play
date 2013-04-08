@@ -8,8 +8,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -44,7 +46,7 @@ public class Message extends Model {
 	String title;
 	
 	@JoinTable(name="messages_tags")
-	@ManyToMany
+	@ManyToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
 	Set<Tag> tags;
 	
 	public Set<Tag> getTags() {
@@ -72,7 +74,9 @@ public class Message extends Model {
 	public void setTags(Set<Tag> tags1) {
 		for(Tag t: tags1) {
 			String tagsString = t.getName();
-			setTags(tagsString);
+			if(!tagsString.trim().equals("")) {
+				setTags(tagsString);
+			}
 		}
 	}
 
