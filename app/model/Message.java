@@ -4,15 +4,20 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.validation.constraints.Size;
 import org.hibernate.validator.constraints.Length;
+import play.Logger;
 import play.data.validation.Constraints.Required;
 import play.db.ebean.Model;
 
@@ -37,6 +42,39 @@ public class Message extends Model {
 	
 	@Column(length=1024)
 	String title;
+	
+	@JoinTable(name="messages_tags")
+	@ManyToMany
+	Set<Tag> tags;
+	
+	public Set<Tag> getTags() {
+		return tags;
+	}
+	
+	public void setTags(String tags) {
+		this.tags = new HashSet<Tag>();
+		final Message _this = this;
+		for(String tag: tags.split("\\s*\\,\\s*")) {
+			Tag t = Tag.find.where().eq("name", tag).findUnique();
+			if(t == null) {
+				t = new Tag(tag);
+			}
+			// t.save();
+			final Set m = t.getMessage();
+			t.setMessage(new HashSet<Message>(){{
+				addAll(m);
+				add(_this);
+			}});
+			this.tags.add(t);
+		}
+	}
+	
+	public void setTags(Set<Tag> tags1) {
+		for(Tag t: tags1) {
+			String tagsString = t.getName();
+			setTags(tagsString);
+		}
+	}
 
 	int clicks = 0;
 	

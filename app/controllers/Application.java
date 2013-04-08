@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import model.Message;
+import model.Tag;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.OutputDocument;
 import net.htmlparser.jericho.Source;
@@ -100,15 +101,21 @@ public class Application extends Controller {
     	Logger.info("asyncPost");
     	Form<Message> m = Form.form(Message.class);
     	final Form f = m.bindFromRequest();
+    	final String e;
     	if(f.hasErrors()) {
-    		ValidationError e = f.error("");
-    		flash("error", e.message());
+    		String e1 = "";
+    		for(Object key: f.errors().keySet()) {
+    			e1 += f.error((String) key);
+    		}
+    		e = e1;
+    		flash("error", e1);
     		f.fill(new Message());
     		// return badRequest(index.render(f, Message.find.all()));
     		//return badRequest(f.errors().values()+"");
     		l = null;
     	} else {
     		l = m.bindFromRequest().get();
+    		e = "";
     	}
     	
     	/*
@@ -134,7 +141,7 @@ public class Application extends Controller {
 		    public void onConnected() {
 		    	try {
 		    		if(l == null) {
-		    			sendMessage("ERROR: "+f.error("").message());
+		    			sendMessage(e);
 		    			close();
 		    			return;
 		    		}
@@ -255,6 +262,9 @@ public class Application extends Controller {
     		if(l.getTitle() == null) {
     			l.setTitle(l.getUrl());
     		}
+    		for(Tag t: l.getTags()) {
+    			t.save();
+    		}
 			l.save();
 			in.close();
 
@@ -273,6 +283,9 @@ public class Application extends Controller {
 					d.setParent(main);
 					Long dId = Ebean.createSqlQuery("select nextval('message_seq') as seq, currval('message_seq')").findUnique().getLong("seq");
 					d.setId(dId);
+		    		for(Tag t: d.getTags()) {
+		    			t.save();
+		    		}
 					d.save();
 		    		docString = docString.replaceAll("##"+i+"##", "/open/"+dId);
 					i++;
@@ -286,6 +299,9 @@ public class Application extends Controller {
 			// in = new FileInputStream(f);
 			l.setTitle(l.getUrl());
 			l.setData(IOUtils.toByteArray(in));
+    		for(Tag t: l.getTags()) {
+    			t.save();
+    		}
 			l.save();
 			in.close();
 		}
