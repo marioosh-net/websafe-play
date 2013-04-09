@@ -396,6 +396,15 @@ public class Application extends Controller {
 			    	outputDocument.remove(startTag);
 			    }
 			    
+			    /**
+			     * process @import inside <style/> tags
+			     */
+			    if(startTag.getName().equalsIgnoreCase("style")) {
+			    	String styleSheetContent = startTag.getElement().getContent().toString();
+			    	styleSheetContent = processCss(styleSheetContent, sourceUrl, comet);
+			    	outputDocument.replace(startTag.getElement().getContent(), styleSheetContent);
+			    }
+			    
 				/**
 				 * replace <link rel="stylesheet" href="<path>" .../>
 				 * with <style type="text/css"> code </style>
@@ -403,7 +412,8 @@ public class Application extends Controller {
 			    if(startTag.getName().equalsIgnoreCase("link")) {
 				    Attributes attributes=startTag.getAttributes();
 				    String rel=attributes.getValue("rel");
-				    if (!"stylesheet".equalsIgnoreCase(rel)) continue;
+				    String type = attributes.getValue("type");
+				    if (!("stylesheet".equalsIgnoreCase(rel) || "text/css".equalsIgnoreCase(type))) continue;
 				    String href=attributes.getValue("href");
 				    if (href==null) continue;
 				    String styleSheetContent;
@@ -556,6 +566,63 @@ public class Application extends Controller {
 		return null;
 	}
 
+
+	/**
+	 * replace @import directive with content
+	 * @param input
+	 * @param baseUrl
+	 * @param comet
+	 * @return
+	 */
+	private static String processCssImports(String input, URL baseUrl, Comet comet) {
+
+		//StringBuffer sb = new StringBuffer(input.length());
+		StringBuffer sb = new StringBuffer();
+		URL url = baseUrl;		
+		/**
+		 * @import search
+		 */
+		String regex = "(@import\\s{0,}url\\s{0,}\\s{0,}\\(['\"])([^'\"]*)(['\"]\\));";		
+		boolean match = false;
+		do {
+			sb = new StringBuffer();
+			Pattern p = Pattern.compile(regex, Pattern.DOTALL);
+			Matcher m = p.matcher(input);
+			while(m.find()) {
+				try {
+					if(m.group(2).startsWith("http")) {
+						url = new URL(m.group(2)); 
+					} else if(m.group(2).startsWith("data:")) {
+						url = null;
+					} else {
+						url = new URL(url, m.group(2));
+					}
+					if(url != null) {
+						Logger.info(m.group() + " => " + url.toString());
+						if(comet != null) comet.sendMessage(m.group() + " => " + url.toString());
+						try {
+							// String b64 = toBase64(url);
+							Message mes = downloadFile(url.toString(), comet);
+							m.appendReplacement(sb, Matcher.quoteReplacement(new String(mes.getData())));
+						} catch (IOException e) {
+							Logger.error(e.toString());
+						}
+					}
+				} catch (MalformedURLException e) {
+					Logger.error(e.toString());
+				}
+			}
+			m.appendTail(sb);
+			input = sb.toString();			
+			
+			Pattern p1 = Pattern.compile(regex, Pattern.DOTALL);
+			Matcher m1 = p1.matcher(input);
+			match = m1.find();
+		} while(match);
+		
+		return input.toString();
+	}
+	
 	/**
 	 * replace all url() with base64
 	 * @param input
@@ -564,15 +631,18 @@ public class Application extends Controller {
 	 */
 	private static String processCss(String input, URL baseUrl, Comet comet) {
 
-		//StringBuffer sb = new StringBuffer(input.length());
+		String step1 = processCssImports(input, baseUrl, comet);
+
+		/**
+		 * other url() search
+		 */
 		StringBuffer sb = new StringBuffer();
-		
 		// (url\s{0,}\(\s{0,}['"]{0,1})([^\)'"]*)(['"]{0,1}\))
 		String regex = "(url\\s{0,}\\(\\s{0,}['\"]{0,1})([^\\'\")]*)(['\"]{0,1}\\))";
 		// input.replaceAll(regex, "$1"+"URL"+"$2$3");
 		// return input;
 		Pattern p = Pattern.compile(regex, Pattern.DOTALL);
-		Matcher m = p.matcher(input);
+		Matcher m = p.matcher(step1);
 		while(m.find()) {
 			try {
 				URL url;
@@ -598,6 +668,7 @@ public class Application extends Controller {
 			}
 		}
 		m.appendTail(sb);
+		
 		return sb.toString();
 	}
 	
