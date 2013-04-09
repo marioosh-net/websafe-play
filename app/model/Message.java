@@ -36,6 +36,9 @@ public class Message extends Model {
 	@Column(length=1024)
 	String url;
 	
+	@Column(length=1024)
+	String host;
+	
 	String contentType;
 	String contentEncoding;
 	
@@ -235,6 +238,14 @@ public class Message extends Model {
 		this.headerFields = headerFields;
 	}
 
+	public String getHost() {
+		return host;
+	}
+	
+	public void setHost(String host) {
+		this.host = host;
+	}
+	
 	public String getHostName() {
 		try {
 			return new URL(url).getHost();

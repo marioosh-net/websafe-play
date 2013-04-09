@@ -39,6 +39,7 @@ import play.mvc.Result;
 import views.html.index;
 import views.html.messages;
 import com.avaje.ebean.Ebean;
+import com.avaje.ebean.Expr;
 import com.avaje.ebean.TxRunnable;
 
 public class Application extends Controller {
@@ -50,6 +51,14 @@ public class Application extends Controller {
         return ok(index.render(getList(null)));
     }
     
+	private static List<Message> getListByHost(String host) {
+		return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("host", host).eq("parent", null).orderBy("timestamp desc").findList();
+	}
+	
+	private static List<Message> getListByTag(Long tagId) {
+		return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("tags.id", tagId).eq("parent", null).orderBy("timestamp desc").findList();
+	}
+	
     private static List<Message> getList(String search) {
     	String uuid=session("uuid");
     	if(uuid==null) {
@@ -67,7 +76,7 @@ public class Application extends Controller {
 	    	}
 	    	return list;
     	} else {
-    		List<Message> list = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findList();
+    		List<Message> list = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().or(Expr.or(Expr.ilike("title","%"+search+"%"), Expr.ilike("description","%"+search+"%")), Expr.ilike("url","%"+search+"%")).eq("parent", null).orderBy("timestamp desc").findList();
     		return list;
     	}
     }
@@ -81,6 +90,14 @@ public class Application extends Controller {
     
     public static Result search(String search) {
     	return ok(index.render(getList(search)));
+    }
+    
+    public static Result searchByHost(String host) {
+    	return ok(index.render(getListByHost(host)));
+    }
+    
+    public static Result searchByTagId(Long tagId) {
+    	return ok(index.render(getListByTag(tagId)));
     }
     
     public static Result asyncPost() {
@@ -223,6 +240,7 @@ public class Application extends Controller {
 		l.setContentType(c.getContentType());
 		l.setContentEncoding(c.getContentEncoding());
 		l.setHeaderFields(c.getHeaderFields());
+		l.setHost(new URL(l.getUrl()).getHost());
 
 		/*
 		File f = File.createTempFile(UUID.randomUUID().toString(), "");

@@ -7,6 +7,7 @@ create table message (
   id                        bigint not null,
   timestamp                 timestamp,
   url                       varchar(1024),
+  host                      varchar(1024),
   content_type              varchar(255),
   content_encoding          varchar(255),
   description               varchar(1024),
