@@ -3,10 +3,10 @@
 @main("webSafe") {
 
 	<div class="left leftfixed">
-	    <form method="post" action="/post" id="form">
-	        URL<br/><input type="text" name="url" size="100"/><br/>
-	        Tags (comma separated)<br/><input type="text" name="tags" size="100"/><br/>
-	        <input type="button" value="Save" id="okAsync" />
+	    <form method="post" action="/post" id="form" class="highlighted" style="padding-bottom: 20px;">
+	        URL<br/><input type="text" name="url" style="width: 100%;"/><br/>
+	        Tags (comma separated)<br/><input type="text" name="tags" style="width: 85%;"/>
+	        <input type="button" value="Save" id="okAsync" style="width: 10%;" />
 	    </form>
 	    
 	    @*
@@ -17,7 +17,9 @@
 	    }
 	    *@
 	    
-	    @*<input type="button" value="comet" id="comet" />*@                
+	    @*<input type="button" value="comet" id="comet" />*@
+	    
+	        <div id="list">@messages(list)</div>                
 	</div>
 	<div class="left rightfixed">
 	   Search</br>
@@ -26,5 +28,4 @@
 	</div>
 	<div class="clear"></div>
 
-    <div id="list">@messages(list)</div>
 }

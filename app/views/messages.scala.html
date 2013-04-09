@@ -3,6 +3,8 @@
 <div class="block-header">
 Links by date <span class="main-count"></span> 
 <span id="topnavi">
+
+<!-- navi -->
 @if(request().getQueryString("p") != null) {
     @if(request().getQueryString("p") != "0") {
         <a href="?p=@{Integer.parseInt(request().getQueryString("p"))-1}">&laquo; Newer</a>
@@ -10,13 +12,22 @@ Links by date <span class="main-count"></span>
         <span class="inactive">&laquo; Newer</span>
     }
     @*Page @{Integer.parseInt(request().getQueryString("p"))+1}*@
-    <a href="?p=@{Integer.parseInt(request().getQueryString("p"))+1}">Older &raquo;</a>        
+    @if(Integer.parseInt(flash.get("total")) <= Integer.parseInt(request().getQueryString("p"))+1) {
+        <span class="inactive">Older &raquo;</span>
+    } else {
+        <a href="?p=@{Integer.parseInt(request().getQueryString("p"))+1}">Older &raquo;</a>
+    }        
 } else {
+   <span class="inactive">&laquo; Newer</span>
+   @if(Integer.parseInt(flash.get("total")) > 1) {
     <a href="?p=1">Older &raquo;</a>
-    <span class="inactive">&laquo; Newer</span>
+   } else {
+    <span class="inactive">Older &raquo;</span> 
+    }   
 }                                
 </span>
 </div>
+<div id="leftPan">
 <ul>
 @for(m <- messages) {
     @*<li><a class="link" href="/open/@m.getId()" target="_blank">@m.getUrl()</a> <span class="content-type">@m.getContentType()</span> | <a href="@m.getUrl()" target="_blank">original</a></li>*@
@@ -46,4 +57,26 @@ Links by date <span class="main-count"></span>
                       		</div>
 }
 </ul>
+
+<!-- pages -->
+</div>
+<div id="navi">
+Pages:&nbsp;
+@for(i <- Http.Context.current().args.get("pages").asInstanceOf[Array[Integer]].indices) {
+	 @if(request().getQueryString("p") != null) {
+	    @if(Integer.parseInt(request().getQueryString("p")) == i) {
+	        <span>@{i+1}</span>    
+	    } else {
+	        <span><a href="?p=@i">@{i+1}</a></span>
+	    }
+	 } else {
+	    @if(0 == i) {
+	        <span>@{i+1}</span>
+	    } else {
+	        <span><a href="?p=@i">@{i+1}</a></span>
+	    }
+	 }
+}
+</div>
+
 }

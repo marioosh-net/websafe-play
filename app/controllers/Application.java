@@ -31,6 +31,7 @@ import play.cache.Cache;
 import play.data.Form;
 import play.libs.Comet;
 import play.mvc.Controller;
+import play.mvc.Http;
 import play.mvc.Result;
 import views.html.index;
 import views.html.messages;
@@ -61,11 +62,15 @@ public class Application extends Controller {
     
 	private static List<Message> getListByHost(String host, int page) {
 		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("host", host).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+		flash("total", pl.getTotalPageCount()+"");
+		Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
 		return pl.getPage(page).getList();
 	}
 	
 	private static List<Message> getListByTag(Long tagId, int page) {
 		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("tags.id", tagId).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+		flash("total", pl.getTotalPageCount()+"");
+		Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
 		return pl.getPage(page).getList();
 	}
 	
@@ -78,6 +83,8 @@ public class Application extends Controller {
 
     	if(search == null) {
     		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+    		flash("total", pl.getTotalPageCount()+"");
+    		Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
     		return pl.getPage(page).getList();
     		
     		// return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findList();
@@ -93,6 +100,8 @@ public class Application extends Controller {
 	    	*/
     	} else {
     		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().or(Expr.or(Expr.ilike("title","%"+search+"%"), Expr.ilike("description","%"+search+"%")), Expr.ilike("url","%"+search+"%")).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+    		flash("total", pl.getTotalPageCount()+"");
+    		Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
     		return pl.getPage(page).getList();
     	}
     }

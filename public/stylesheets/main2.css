@@ -833,3 +833,9 @@ iframe {
 	font-size: 1.1em;
 	cursor: pointer;
 }
+#navi span {
+	margin-right: 5px;
+}
+#list {
+	margin-top: 10px;
+}

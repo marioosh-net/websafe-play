@@ -1,12 +1,22 @@
 $(document).ready(function(){
+	/*
 	$('#url').select();
 	$('#url').focus();
+	*/
+	$('#search-string').select();
+	$('#search-string').focus();
 	
 	/*
 	if($('#list').is(':empty')) {
 		$('#list').load('/list');
 	}
 	*/
+	
+	$('#form input').keydown(function(e) {
+	    if (e.keyCode == 13) {
+	    	$('#okAsync').trigger('click');
+	    }
+	});
 	
 	$('#okAsync').click(function(){
 		if(!$('#log').is(":visible")) {
@@ -62,6 +72,13 @@ $(document).ready(function(){
 			window.location = '/search/'+$('#search-string').val().trim();
 		}
 	});
+	$('#search-string').keydown(function(e) {
+	    if (e.keyCode == 13) {
+	    	$('#search-start').trigger('click');
+	    }
+	});
+	
+	
 });
 
 window['log'] = log
