@@ -19,6 +19,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+import javax.persistence.CascadeType;
 import model.Message;
 import model.Tag;
 import net.htmlparser.jericho.Attributes;
@@ -43,31 +44,37 @@ import com.avaje.ebean.TxRunnable;
 public class Application extends Controller {
 
     private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22";
+	private static final int PAGE_MAX = 5;
 
 	public static Result index() {
-        return ok(index.render(Form.form(Message.class), getList()));
+        return ok(index.render(Form.form(Message.class), getList(null)));
     }
     
-    private static List<Message> getList() {
+    private static List<Message> getList(String search) {
     	String uuid=session("uuid");
     	if(uuid==null) {
     		uuid=java.util.UUID.randomUUID().toString();
     		session("uuid", uuid);
     	}    	
-    	
-    	List<Message> list = (List<Message>) Cache.get(uuid+"list");
-    	if(list == null) {
-    		list = Message.find.setMaxRows(20).where().eq("parent", null).orderBy("timestamp desc").findList();
-    		Cache.set(uuid+"list", list);
+
+    	if(search == null) {    	
+	    	List<Message> list = (List<Message>) Cache.get(uuid+"list");
+	    	if(list == null) {
+	    		list = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findList();
+	    		Cache.set(uuid+"list", list);
+	    	} else {
+	    		Logger.info("get CACHED");
+	    	}
+	    	return list;
     	} else {
-    		Logger.info("get CACHED");
+    		List<Message> list = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findList();
+    		return list;
     	}
-    	return list;
     }
     
     public static Result list() {
     	Cache.remove(session("uuid")+"list");    	
-    	return ok(messages.render(getList()));
+    	return ok(messages.render(getList(null)));
     }
     
     public static Result post() {
@@ -77,7 +84,7 @@ public class Application extends Controller {
     		ValidationError e = f.error("");
     		flash("error", e.message());
     		f.fill(new Message());
-    		return badRequest(index.render(f, getList()));
+    		return badRequest(index.render(f, getList(null)));
     		//return badRequest(f.errors().values()+"");
     	}
     	final Message l = m.bindFromRequest().get();
@@ -262,9 +269,6 @@ public class Application extends Controller {
     		if(l.getTitle() == null) {
     			l.setTitle(l.getUrl());
     		}
-    		for(Tag t: l.getTags()) {
-    			t.save();
-    		}
 			l.save();
 			in.close();
 
@@ -283,9 +287,6 @@ public class Application extends Controller {
 					d.setParent(main);
 					Long dId = Ebean.createSqlQuery("select nextval('message_seq') as seq, currval('message_seq')").findUnique().getLong("seq");
 					d.setId(dId);
-		    		for(Tag t: d.getTags()) {
-		    			t.save();
-		    		}
 					d.save();
 		    		docString = docString.replaceAll("##"+i+"##", "/open/"+dId);
 					i++;
@@ -299,9 +300,11 @@ public class Application extends Controller {
 			// in = new FileInputStream(f);
 			l.setTitle(l.getUrl());
 			l.setData(IOUtils.toByteArray(in));
+			/* bo jest cascade=CascadeType.ALL lub CascadeType.PERSIST
     		for(Tag t: l.getTags()) {
     			t.save();
     		}
+    		*/
 			l.save();
 			in.close();
 		}
