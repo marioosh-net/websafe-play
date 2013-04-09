@@ -4,8 +4,9 @@
 
 # Home page
 GET     /                           controllers.Application.index()
-GET     /list                           controllers.Application.list()
-POST    /post                           controllers.Application.post()
+GET     /search/*search                           controllers.Application.search(search)
+GET     /list/*search                           controllers.Application.list(search)
+GET     /list                           controllers.Application.list(search: String ?= "")
 GET    /asyncPost                           controllers.Application.asyncPost()
 POST    /asyncPost                           controllers.Application.asyncPost()
 GET     /open/:id                   controllers.Application.open(id: Long)

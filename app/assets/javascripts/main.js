@@ -2,6 +2,12 @@ $(document).ready(function(){
 	$('#url').select();
 	$('#url').focus();
 	
+	/*
+	if($('#list').is(':empty')) {
+		$('#list').load('/list');
+	}
+	*/
+	
 	$('#okAsync').click(function(){
 		if(!$('#log').is(":visible")) {
 			$('#log').slideToggle();
@@ -51,6 +57,11 @@ $(document).ready(function(){
 		$('#log').slideToggle();
 	});
 	
+	$('#search-start').click(function(){
+		if($('#search-string').val().trim() != '') {
+			window.location = '/search/'+$('#search-string').val().trim();
+		}
+	});
 });
 
 window['log'] = log

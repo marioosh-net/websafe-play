@@ -47,7 +47,7 @@ public class Application extends Controller {
 	private static final int PAGE_MAX = 5;
 
 	public static Result index() {
-        return ok(index.render(Form.form(Message.class), getList(null)));
+        return ok(index.render(getList(null)));
     }
     
     private static List<Message> getList(String search) {
@@ -72,35 +72,15 @@ public class Application extends Controller {
     	}
     }
     
-    public static Result list() {
-    	Cache.remove(session("uuid")+"list");    	
-    	return ok(messages.render(getList(null)));
+    public static Result list(String search) {
+    	Cache.remove(session("uuid")+"list"); 
+    	Logger.info("SEARCH:"+search);
+    	return ok(messages.render(getList(search)));
     }
     
-    public static Result post() {
-    	Form<Message> m = Form.form(Message.class);
-    	Form f = m.bindFromRequest();
-    	if(f.hasErrors()) {
-    		ValidationError e = f.error("");
-    		flash("error", e.message());
-    		f.fill(new Message());
-    		return badRequest(index.render(f, getList(null)));
-    		//return badRequest(f.errors().values()+"");
-    	}
-    	final Message l = m.bindFromRequest().get();
-		Ebean.execute(new TxRunnable() {
-			@Override
-			public void run() {
-		    	try {
-					add(l, null);
-					flash("info", "elem added");
-				} catch (IOException e) {
-					flash("error", "ERROR: " + e);
-					e.printStackTrace();
-				}
-			}
-		});    		
-    	return redirect("/");
+    
+    public static Result search(String search) {
+    	return ok(index.render(getList(search)));
     }
     
     public static Result asyncPost() {

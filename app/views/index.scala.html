@@ -1,24 +1,30 @@
-@(myForm: Form[model.Message], list: List[model.Message])
+@(list: List[model.Message])
 @import helper._
 @main("webSafe") {
 
-    <form method="post" action="/post" id="form">
-        URL <input type="text" name="url" size="100"/><br/>
-        Tags <input type="text" name="tags" size="100"/><br/>
-        <input type="button" value="Save" id="okAsync" />
-    </form>
-    
-    @*
-    @form(action = routes.Application.post, 'id -> "form") {
-        @inputText(myForm("url"), 'size -> 100, 'placeholder -> "http...", '_label -> "")
-        <input type="submit" value="ok" id="ok" />
-        <input type="button" value="OK" id="okAsync" />
-    }
-    *@
-    
-    @*<input type="button" value="comet" id="comet" />*@
-    
-    <div id="list">
-    @messages(list)
-    </div>
+	<div class="left leftfixed">
+	    <form method="post" action="/post" id="form">
+	        URL <input type="text" name="url" size="100"/><br/>
+	        Tags <input type="text" name="tags" size="100"/><br/>
+	        <input type="button" value="Save" id="okAsync" />
+	    </form>
+	    
+	    @*
+	    @form(action = routes.Application.post, 'id -> "form") {
+	        @inputText(myForm("url"), 'size -> 100, 'placeholder -> "http...", '_label -> "")
+	        <input type="submit" value="ok" id="ok" />
+	        <input type="button" value="OK" id="okAsync" />
+	    }
+	    *@
+	    
+	    @*<input type="button" value="comet" id="comet" />*@                
+	</div>
+	<div class="left rightfixed">
+	   Search</br>
+	  <input type="text" name="search-string" id="search-string" value=""/>
+	  <input type="button" value="Search" id="search-start" name="search-start"/>
+	</div>
+	<div class="clear"></div>
+
+    <div id="list">@messages(list)</div>
 }

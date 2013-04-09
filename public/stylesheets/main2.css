@@ -216,12 +216,12 @@ label {
 .leftfixed {
 	margin-right: 15px; 
 	width: 647px;
-	padding-left: 10px;
+	/*padding-left: 10px;*/
 }
 
 .rightfixed {
 	width: 275px;
-	padding-right: 10px;
+	/*padding-right: 10px;*/
 }
 .panel {
 	margin-bottom: 35px;
