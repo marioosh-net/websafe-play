@@ -1,5 +1,22 @@
 @(messages: List[model.Message])
 @if(messages != null) {
+<div class="block-header">
+Links by date <span class="main-count"></span> 
+<span id="topnavi">
+@if(request().getQueryString("p") != null) {
+    @if(request().getQueryString("p") != "0") {
+        <a href="?p=@{Integer.parseInt(request().getQueryString("p"))-1}">&laquo; Newer</a>
+    } else {
+        <span class="inactive">&laquo; Newer</span>
+    }
+    @*Page @{Integer.parseInt(request().getQueryString("p"))+1}*@
+    <a href="?p=@{Integer.parseInt(request().getQueryString("p"))+1}">Older &raquo;</a>        
+} else {
+    <a href="?p=1">Older &raquo;</a>
+    <span class="inactive">&laquo; Newer</span>
+}                                
+</span>
+</div>
 <ul>
 @for(m <- messages) {
     @*<li><a class="link" href="/open/@m.getId()" target="_blank">@m.getUrl()</a> <span class="content-type">@m.getContentType()</span> | <a href="@m.getUrl()" target="_blank">original</a></li>*@
@@ -28,4 +45,5 @@
                       			<div style="clear: both;"></div>
                       		</div>
 }
-</ul>}
+</ul>
+}

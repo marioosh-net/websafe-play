@@ -19,9 +19,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
-import javax.persistence.CascadeType;
 import model.Message;
-import model.Tag;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.OutputDocument;
 import net.htmlparser.jericho.Source;
@@ -31,42 +29,59 @@ import org.apache.commons.io.IOUtils;
 import play.Logger;
 import play.cache.Cache;
 import play.data.Form;
-import play.data.validation.ValidationError;
 import play.libs.Comet;
-import play.libs.F.Callback0;
 import play.mvc.Controller;
 import play.mvc.Result;
 import views.html.index;
 import views.html.messages;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Expr;
-import com.avaje.ebean.TxRunnable;
+import com.avaje.ebean.PagingList;
 
 public class Application extends Controller {
 
     private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22";
 	private static final int PAGE_MAX = 5;
 
+	private static Integer getPageNumber() {
+		try {
+			String p = request().getQueryString("p");
+			if(p != null) {
+				int i = Integer.parseInt(request().getQueryString("p"));
+				return i>0?i:0;
+			}
+		} catch (Exception e) {
+		}
+		return 0;
+	}
+	
 	public static Result index() {
-        return ok(index.render(getList(null)));
+        return ok(index.render(getList(null, getPageNumber())));
     }
     
-	private static List<Message> getListByHost(String host) {
-		return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("host", host).eq("parent", null).orderBy("timestamp desc").findList();
+	private static List<Message> getListByHost(String host, int page) {
+		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("host", host).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+		return pl.getPage(page).getList();
 	}
 	
-	private static List<Message> getListByTag(Long tagId) {
-		return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("tags.id", tagId).eq("parent", null).orderBy("timestamp desc").findList();
+	private static List<Message> getListByTag(Long tagId, int page) {
+		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("tags.id", tagId).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+		return pl.getPage(page).getList();
 	}
 	
-    private static List<Message> getList(String search) {
+    private static List<Message> getList(String search, int page) {
     	String uuid=session("uuid");
     	if(uuid==null) {
     		uuid=java.util.UUID.randomUUID().toString();
     		session("uuid", uuid);
     	}    	
 
-    	if(search == null) {    	
+    	if(search == null) {
+    		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+    		return pl.getPage(page).getList();
+    		
+    		// return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findList();
+    		/*
 	    	List<Message> list = (List<Message>) Cache.get(uuid+"list");
 	    	if(list == null) {
 	    		list = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findList();
@@ -75,29 +90,29 @@ public class Application extends Controller {
 	    		Logger.info("get CACHED");
 	    	}
 	    	return list;
+	    	*/
     	} else {
-    		List<Message> list = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().or(Expr.or(Expr.ilike("title","%"+search+"%"), Expr.ilike("description","%"+search+"%")), Expr.ilike("url","%"+search+"%")).eq("parent", null).orderBy("timestamp desc").findList();
-    		return list;
+    		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().or(Expr.or(Expr.ilike("title","%"+search+"%"), Expr.ilike("description","%"+search+"%")), Expr.ilike("url","%"+search+"%")).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+    		return pl.getPage(page).getList();
     	}
     }
     
     public static Result list(String search) {
     	Cache.remove(session("uuid")+"list"); 
     	Logger.info("SEARCH:"+search);
-    	return ok(messages.render(getList(search)));
+    	return ok(messages.render(getList(search, getPageNumber())));
     }
     
-    
     public static Result search(String search) {
-    	return ok(index.render(getList(search)));
+    	return ok(index.render(getList(search, getPageNumber())));
     }
     
     public static Result searchByHost(String host) {
-    	return ok(index.render(getListByHost(host)));
+    	return ok(index.render(getListByHost(host, getPageNumber())));
     }
     
     public static Result searchByTagId(Long tagId) {
-    	return ok(index.render(getListByTag(tagId)));
+    	return ok(index.render(getListByTag(tagId, getPageNumber())));
     }
     
     public static Result asyncPost() {
