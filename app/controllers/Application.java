@@ -605,6 +605,7 @@ public class Application extends Controller {
 							Message mes = downloadFile(url.toString(), comet);
 							m.appendReplacement(sb, Matcher.quoteReplacement(new String(mes.getData())));
 						} catch (IOException e) {
+							m.appendReplacement(sb, Matcher.quoteReplacement("")); // w razie problemow z dostepem do pliku
 							Logger.error(e.toString());
 						}
 					}
