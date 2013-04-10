@@ -42,7 +42,7 @@ import com.avaje.ebean.PagingList;
 public class Application extends Controller {
 
     private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22";
-	private static final int PAGE_MAX = 5;
+	private static final int PAGE_MAX = 10;
 
 	private static Integer getPageNumber() {
 		try {

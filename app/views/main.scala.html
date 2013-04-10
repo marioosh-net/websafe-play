@@ -16,35 +16,34 @@
     
 
 	<div id="wrapper">
-				@*
+				
 		<div id="header">
 			<div class="fixedwidth">
-
 				<div class="left leftfixed">
-				<a href="/"><img src="images/logo.png" alt=""></a>
+				<a href="/"><span class="page-title">webSafe</span>@*<img src="@routes.Assets.at("images/logo.png")" alt="">*@</a>
 				</div>
-				
 				<div class="left rightfixed">
 					<div id="search">
+				      <input type="text" name="search-string" id="search-string" value=""/>
+				      <input type="button" class="button" id="search-start" name="search-start"/>
 					</div>
  				</div>
- 				
  				<div class="clear"></div>
-
 			</div>		
 		</div>
- 				*@	
+ 				
 		<div id="main">
-			@*
+			
 			<div id="menu">
     			<div class="fixedwidth">
 				
 					<div class="left">
 		       			
 		       			<div class="menu-item first-item">
-							<a href="#" onclick="hidepanels('new', function() {jQuery('#address').focus();});">New link</a>
+							<a href="#" onclick="$('#new').toggle('fast', function(){$('#url').focus()});">New link</a>
 						</div>
 						
+						@*
 						<div class="menu-item">
 							
 							<a href="/linkownia/login.html">Login</a>
@@ -52,6 +51,7 @@
 						<div class="menu-item">
                             <a href="#" onclick="register();">Register</a>
 						</div>
+						*@
 						
 						<div class="clear"></div>
 					</div>
@@ -68,19 +68,11 @@
 					<div class="clear"></div>
 				</div>
 			</div>
-			*@
+			
 			
 			<div class="fixedwidth">
 				<div id="content">		
-				
-         <!-- <iframe src="/comet"></iframe> -->
-        
-        <div class="log-header">Progress LOG</div>
-        <div id="log"></div>
-        <div class="title"><a href="/">webSafe</a></div>
-        @if(flash.get("info")) {<div class="info">@flash.get("info")</div>}
-        @if(flash.get("error")) {<div class="error">@flash.get("error")</div>}
-        @content
+@content
  				</div>
 			</div>
 		</div>
