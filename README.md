@@ -1,4 +1,4 @@
-WebSafe (Play 2.1)
+WebSafe (powered by Play 2.*)
 ---
 
 Save webpages with dependencies
