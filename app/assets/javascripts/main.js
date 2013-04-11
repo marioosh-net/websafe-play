@@ -93,6 +93,8 @@ function log(m) {
 		// window.location.reload();
 		// lepiej byloby przeladowywac tylko liste 
 		$('#list').load('/list');
+		$('#clicks1').load('/clicks');
+		$('#tags1').load('/tags');		
 		if($('#log').is(":visible")) {
 			$('#log').delay(2000).slideToggle();
 		}
@@ -105,6 +107,5 @@ function openLink(id) {
 		jQuery('div.count_'+id).html(data);
 		$('#clicks1').load('/clicks');
 	}, 'text');
-	/*$('#tags1').load('/tags');*/
 	window.open('/open/'+id);
 }
