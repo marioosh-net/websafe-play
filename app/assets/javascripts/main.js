@@ -103,6 +103,8 @@ window['openLink'] = openLink;
 function openLink(id) {
 	jQuery.get('/click/'+id, function(data) {
 		jQuery('div.count_'+id).html(data);
+		$('#clicks1').load('/clicks');
 	}, 'text');
+	/*$('#tags1').load('/tags');*/
 	window.open('/open/'+id);
 }
