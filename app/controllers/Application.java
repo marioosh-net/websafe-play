@@ -34,6 +34,7 @@ import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
 import views.html.index;
+import views.html.deps;
 import views.html.messages;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Expr;
@@ -702,5 +703,10 @@ public class Application extends Controller {
 		m.update();
 		Cache.remove(session("uuid")+"list");
 		return ok(Message.find.byId(id).getClicks()+"");
+	}
+	
+	public static Result deps(Long parentId) {
+		List<Message> m = Message.find.where().eq("parent.id", parentId).findList();
+		return ok(deps.render(m));
 	}
 }

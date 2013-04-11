@@ -45,13 +45,21 @@ Links by date <span class="main-count"></span>
 									<span class="link-item-teaser">— <span class="descr">@m.getDescription()</span><span class="timestamp">@m.getTimestamp()</span></span>										
                       				</div>
                       				
-                                    <div class="tags">
-                                            <span class="tag">  
-                                                @for(tag <- m.getTags()) {
-                                                    <a href="/search/tag/@tag.getId()">@tag.getName()</a>
-                                                }                                            
-                                            </span>                                     
+                      				<div>
+	                      				<div class="deps2" >
+	                                        <span><a class="opendeps" parentid="@m.getId()" href="#"><img src="@routes.Assets.at("images/deps.png")"> show dependencies</a></span>                      				
+	                      				</div>
+	                                    <div class="tags">
+	                                            <span class="tag">  
+	                                                @for(tag <- m.getTags()) {
+	                                                    <a href="/search/tag/@tag.getId()">@tag.getName()</a>
+	                                                }                                            
+	                                            </span>                                                                                 
+	                                    </div>
+	                                    <div class="clear"></div>
                                     </div>
+                                    
+                                    <div class="deps deps_@m.getId()"></div>
                       			</div>
                       			<div style="clear: both;"></div>
                       		</div>

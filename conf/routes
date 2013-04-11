@@ -15,6 +15,7 @@ GET     /open/:id                   controllers.Application.open(id: Long)
 GET		/click/:id					controllers.Application.clickPlus(id: Long)
 GET     /tags                       controllers.Tags.getTags
 GET     /clicks                       controllers.Clicks.getClicks
+GET     /deps/:parentId                       controllers.Application.deps(parentId: Long)
 
 GET     /test                   controllers.Test.test
 GET     /comet1                   controllers.Test.comet

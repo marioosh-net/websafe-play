@@ -850,3 +850,33 @@ iframe {
 	font-size: 2.5em;
 	font-weight: bold;
 }
+.deps {
+	display: none;
+    font-size: 0.91em;
+}
+.deps2 {
+    float: left;	
+}
+.deps2 a {
+    border-bottom: 1px solid #CEDBF1;
+    color: #5F88CE;
+}
+.deps2 a:hover {
+    border-bottom: 1px solid #000;
+    color: #000;
+}
+.deps2 img {
+	vertical-align: bottom;
+} 
+
+.deps a {
+    border-bottom: 1px solid #CEDBF1;
+    color: #5F88CE;
+}
+.deps a:hover {
+    border-bottom: 1px solid #000;
+    color: #000;
+}
+.opendeps {
+	font-size: 0.91em;
+}

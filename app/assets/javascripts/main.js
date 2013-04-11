@@ -77,7 +77,13 @@ $(document).ready(function(){
 	    	$('#search-start').trigger('click');
 	    }
 	});
-	
+
+	$('.opendeps').click(function(){
+		var id = $(this).attr('parentid');
+		$('.deps_'+id).load('/deps/'+id);
+		$('.deps_'+id).toggle();
+		return false;
+	});
 	
 });
 
