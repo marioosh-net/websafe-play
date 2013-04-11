@@ -102,8 +102,10 @@ function log(m) {
 		$('#clicks1').load('/clicks');
 		$('#tags1').load('/tags');		
 		if($('#log').is(":visible")) {
-			$('#log').delay(2000).slideToggle();
+			$('#log').slideToggle();
+			$('#new').slideToggle();
 		}
+		// $('#new').slideToggle();
 	}
 }
 
