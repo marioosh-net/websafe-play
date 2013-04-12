@@ -880,3 +880,11 @@ iframe {
 .opendeps {
 	font-size: 0.91em;
 }
+.opendeps .img {
+	height: 12px;
+	width: 12px;
+	background: url(/assets/images/deps.png) no-repeat;
+}
+.opendeps .loading {
+	background: url(/assets/images/ajax.gif) no-repeat; 
+}

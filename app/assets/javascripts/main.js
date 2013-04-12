@@ -80,8 +80,15 @@ $(document).ready(function(){
 
 	$('.opendeps').click(function(){
 		var id = $(this).attr('parentid');
-		$('.deps_'+id).load('/deps/'+id);
-		$('.deps_'+id).toggle();
+		if($('.deps_'+id).is(":visible")) {
+			$('.deps_'+id).toggle();
+		} else {
+			$('#deps_img_'+id).addClass('loading');
+			$('.deps_'+id).load('/deps/'+id, function(){
+				$('.deps_'+id).toggle();
+				$('#deps_img_'+id).removeClass('loading');
+			});
+		}
 		return false;
 	});
 	
