@@ -77,22 +77,24 @@ $(document).ready(function(){
 	    	$('#search-start').trigger('click');
 	    }
 	});
-
-	$('.opendeps').click(function(){
-		var id = $(this).attr('parentid');
-		if($('.deps_'+id).is(":visible")) {
-			$('.deps_'+id).toggle();
-		} else {
-			$('#deps_img_'+id).addClass('loading');
-			$('.deps_'+id).load('/deps/'+id, function(){
-				$('.deps_'+id).toggle();
-				$('#deps_img_'+id).removeClass('loading');
-			});
-		}
-		return false;
-	});
+	$('.opendeps').click(depsclick);
 	
 });
+
+window['depsclick'] = depsclick;
+var depsclick = function(){
+	var id = $(this).attr('parentid');
+	if($('.deps_'+id).is(":visible")) {
+		$('.deps_'+id).toggle();
+	} else {
+		$('#deps_img_'+id).addClass('loading');
+		$('.deps_'+id).load('/deps/'+id, function(){
+			$('.deps_'+id).toggle();
+			$('#deps_img_'+id).removeClass('loading');
+		});
+	}
+	return false;
+};
 
 window['log'] = log
 function log(m) {
@@ -103,9 +105,10 @@ function log(m) {
 	objDiv.scrollTop = objDiv.scrollHeight;
 	
 	if(m == 'DONE') {
-		// window.location.reload();
-		// lepiej byloby przeladowywac tylko liste 
-		$('#list').load('/list');
+		/* window.location.reload();*/
+		$('#list').load('/list', function(){
+			$('.opendeps').click(depsclick);					
+		});
 		$('#clicks1').load('/clicks');
 		$('#tags1').load('/tags');		
 		if($('#log').is(":visible")) {
