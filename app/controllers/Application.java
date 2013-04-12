@@ -114,6 +114,7 @@ public class Application extends Controller {
     }
     
     public static Result search(String search) {
+    	flash("search",search);
     	return ok(index.render(getList(search, getPageNumber())));
     }
     

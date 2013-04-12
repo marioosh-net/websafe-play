@@ -6,7 +6,7 @@
 GET     /                           controllers.Application.index()
 GET     /search/tag/:tagId              controllers.Application.searchByTagId(tagId: Long)
 GET     /search/host/:host              controllers.Application.searchByHost(host: String)
-GET     /search/*search                           controllers.Application.search(search)
+GET     /search1/*search                           controllers.Application.search(search)
 GET     /list/*search                           controllers.Application.list(search)
 GET     /list                           controllers.Application.list(search: String ?= "")
 GET    /asyncPost                           controllers.Application.asyncPost()

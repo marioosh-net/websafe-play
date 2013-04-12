@@ -69,7 +69,7 @@ $(document).ready(function(){
 	
 	$('#search-start').click(function(){
 		if($('#search-string').val().trim() != '') {
-			window.location = '/search/'+$('#search-string').val().trim();
+			window.location = '/search1/'+$('#search-string').val().trim();
 		}
 	});
 	$('#search-string').keydown(function(e) {
