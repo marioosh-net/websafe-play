@@ -80,6 +80,12 @@ public class Application extends Controller {
 			 * long running job
 			 */
 			public PagingList<Message> call() {
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
 			}
 		});
