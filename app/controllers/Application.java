@@ -92,7 +92,6 @@ public class Application extends Controller {
 				new Function<PagingList<Message>, Result>() {
 					@Override
 					public Result apply(PagingList<Message> pl) throws Exception {
-						Logger.info("CALLBACK");
 						flash("total", pl.getTotalPageCount()+"");
 						Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
 						return ok(index.render(pl.getPage(getPageNumber()).getList()));
@@ -159,7 +158,6 @@ public class Application extends Controller {
 				new Function<PagingList<Message>, Result>() {
 					@Override
 					public Result apply(PagingList<Message> pl) throws Exception {
-						Logger.info("CALLBACK");
 						flash("total", pl.getTotalPageCount()+"");
 						Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
 						return ok(messages.render(pl.getPage(getPageNumber()).getList()));
@@ -193,7 +191,6 @@ public class Application extends Controller {
 				new Function<PagingList<Message>, Result>() {
 					@Override
 					public Result apply(PagingList<Message> pl) throws Exception {
-						Logger.info("CALLBACK");
 						flash("total", pl.getTotalPageCount()+"");
 						Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
 						return ok(index.render(pl.getPage(getPageNumber()).getList()));
@@ -234,7 +231,6 @@ public class Application extends Controller {
 				new Function<PagingList<Message>, Result>() {
 					@Override
 					public Result apply(PagingList<Message> pl) throws Exception {
-						Logger.info("CALLBACK");
 						flash("total", pl.getTotalPageCount()+"");
 						Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
 						return ok(index.render(pl.getPage(getPageNumber()).getList()));
@@ -263,7 +259,6 @@ public class Application extends Controller {
 				new Function<PagingList<Message>, Result>() {
 					@Override
 					public Result apply(PagingList<Message> pl) throws Exception {
-						Logger.info("CALLBACK");
 						flash("total", pl.getTotalPageCount()+"");
 						Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
 						return ok(index.render(pl.getPage(getPageNumber()).getList()));
