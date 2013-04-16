@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
@@ -29,6 +30,7 @@ import org.apache.commons.io.IOUtils;
 import play.Logger;
 import play.cache.Cache;
 import play.data.Form;
+import play.libs.Akka;
 import play.libs.Comet;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -39,6 +41,7 @@ import views.html.messages;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Expr;
 import com.avaje.ebean.PagingList;
+import play.libs.F.Function;
 
 public class Application extends Controller {
 
@@ -57,9 +60,45 @@ public class Application extends Controller {
 		return 0;
 	}
 	
-	public static Result index() {
+	/**
+	 * old way
+	 * @return
+	 */
+	public static Result index2() {
         return ok(index.render(getList(null, getPageNumber())));
     }
+	
+	/**
+	 * new way
+	 * @return
+	 */
+	public static Result index() {
+		
+		return async(
+			Akka.future(new Callable<PagingList<Message>>() {
+				/**
+				 * long running job
+				 */
+				public PagingList<Message> call() {
+					return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+				}
+			}).map(
+				/**
+				 * callback function
+				 */
+				new Function<PagingList<Message>, Result>() {
+					@Override
+					public Result apply(PagingList<Message> pl) throws Exception {
+						Logger.info("CALLBACK");
+						flash("total", pl.getTotalPageCount()+"");
+						Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
+						return ok(index.render(pl.getPage(getPageNumber()).getList()));
+					}			
+				}
+			)
+		);
+    }
+	
     
 	private static List<Message> getListByHost(String host, int page) {
 		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("host", host).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
