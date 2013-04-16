@@ -32,6 +32,7 @@ import play.cache.Cache;
 import play.data.Form;
 import play.libs.Akka;
 import play.libs.Comet;
+import play.libs.F.Promise;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -74,15 +75,17 @@ public class Application extends Controller {
 	 */
 	public static Result index() {
 		
+		Promise<PagingList<Message>> list = Akka.future(new Callable<PagingList<Message>>() {
+			/**
+			 * long running job
+			 */
+			public PagingList<Message> call() {
+				return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+			}
+		});
+		
 		return async(
-			Akka.future(new Callable<PagingList<Message>>() {
-				/**
-				 * long running job
-				 */
-				public PagingList<Message> call() {
-					return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
-				}
-			}).map(
+			list.map(
 				/**
 				 * callback function
 				 */
@@ -98,21 +101,6 @@ public class Application extends Controller {
 			)
 		);
     }
-	
-    
-	private static List<Message> getListByHost(String host, int page) {
-		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("host", host).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
-		flash("total", pl.getTotalPageCount()+"");
-		Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
-		return pl.getPage(page).getList();
-	}
-	
-	private static List<Message> getListByTag(Long tagId, int page) {
-		PagingList<Message> pl = Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("tags.id", tagId).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
-		flash("total", pl.getTotalPageCount()+"");
-		Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
-		return pl.getPage(page).getList();
-	}
 	
     private static List<Message> getList(String search, int page) {
     	String uuid=session("uuid");
@@ -145,7 +133,77 @@ public class Application extends Controller {
     		return pl.getPage(page).getList();
     	}
     }
+
+    public static Result list(final String search) {
+    	Cache.remove(session("uuid")+"list"); 
+    	Logger.info("SEARCH:"+search);
     
+		Promise<PagingList<Message>> list = Akka.future(new Callable<PagingList<Message>>() {
+			/**
+			 * long running job
+			 */
+			public PagingList<Message> call() {
+				if(search != null) {
+					return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().or(Expr.or(Expr.ilike("title","%"+search+"%"), Expr.ilike("description","%"+search+"%")), Expr.ilike("url","%"+search+"%")).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+				} else {
+					return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+				}
+			}
+		});
+		
+		return async(
+			list.map(
+				/**
+				 * callback function
+				 */
+				new Function<PagingList<Message>, Result>() {
+					@Override
+					public Result apply(PagingList<Message> pl) throws Exception {
+						Logger.info("CALLBACK");
+						flash("total", pl.getTotalPageCount()+"");
+						Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
+						return ok(messages.render(pl.getPage(getPageNumber()).getList()));
+					}			
+				}
+			)
+		);
+    }
+    
+    public static Result search(final String search) {
+    	flash("search",search);
+    	
+		Promise<PagingList<Message>> list = Akka.future(new Callable<PagingList<Message>>() {
+			/**
+			 * long running job
+			 */
+			public PagingList<Message> call() {
+				if(search != null) {
+					return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().or(Expr.or(Expr.ilike("title","%"+search+"%"), Expr.ilike("description","%"+search+"%")), Expr.ilike("url","%"+search+"%")).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+				} else {
+					return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+				}
+			}
+		});
+		
+		return async(
+			list.map(
+				/**
+				 * callback function
+				 */
+				new Function<PagingList<Message>, Result>() {
+					@Override
+					public Result apply(PagingList<Message> pl) throws Exception {
+						Logger.info("CALLBACK");
+						flash("total", pl.getTotalPageCount()+"");
+						Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
+						return ok(index.render(pl.getPage(getPageNumber()).getList()));
+					}			
+				}
+			)
+		);    	
+    }
+    
+    /*
     public static Result list(String search) {
     	Cache.remove(session("uuid")+"list"); 
     	Logger.info("SEARCH:"+search);
@@ -156,13 +214,63 @@ public class Application extends Controller {
     	flash("search",search);
     	return ok(index.render(getList(search, getPageNumber())));
     }
+    */
     
-    public static Result searchByHost(String host) {
-    	return ok(index.render(getListByHost(host, getPageNumber())));
+    public static Result searchByHost(final String host) {
+		Promise<PagingList<Message>> list = Akka.future(new Callable<PagingList<Message>>() {
+			/**
+			 * long running job
+			 */
+			public PagingList<Message> call() {
+				return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("host", host).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+			}
+		});
+		
+		return async(
+			list.map(
+				/**
+				 * callback function
+				 */
+				new Function<PagingList<Message>, Result>() {
+					@Override
+					public Result apply(PagingList<Message> pl) throws Exception {
+						Logger.info("CALLBACK");
+						flash("total", pl.getTotalPageCount()+"");
+						Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
+						return ok(index.render(pl.getPage(getPageNumber()).getList()));
+					}			
+				}
+			)
+		);
     }
     
-    public static Result searchByTagId(Long tagId) {
-    	return ok(index.render(getListByTag(tagId, getPageNumber())));
+    public static Result searchByTagId(final Long tagId) {
+    	
+		Promise<PagingList<Message>> list = Akka.future(new Callable<PagingList<Message>>() {
+			/**
+			 * long running job
+			 */
+			public PagingList<Message> call() {
+				return Message.find.setMaxRows(PAGE_MAX).fetch("tags").where().eq("tags.id", tagId).eq("parent", null).orderBy("timestamp desc").findPagingList(PAGE_MAX);
+			}
+		});
+		
+		return async(
+			list.map(
+				/**
+				 * callback function
+				 */
+				new Function<PagingList<Message>, Result>() {
+					@Override
+					public Result apply(PagingList<Message> pl) throws Exception {
+						Logger.info("CALLBACK");
+						flash("total", pl.getTotalPageCount()+"");
+						Http.Context.current().args.put("pages", new Integer[pl.getTotalPageCount()]);
+						return ok(index.render(pl.getPage(getPageNumber()).getList()));
+					}			
+				}
+			)
+		);
     }
     
     public static Result asyncPost() {
